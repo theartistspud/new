@@ -133,6 +133,16 @@
   }
   .input-row button:hover{ background:var(--panel-2); }
   .input-row button:disabled{ opacity:0.4; cursor:default; }
+  .mic-btn{
+    border-left:1px solid var(--line);
+    background:transparent; border:none; border-right:1px solid var(--line);
+    width:44px; flex-shrink:0; cursor:pointer; font-size:16px;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--text-dim); transition:color .15s, background .15s;
+  }
+  .mic-btn:hover{ background:var(--panel-2); color:var(--text); }
+  .mic-btn.listening{ color:#FF8A5C; animation:pulse 1s infinite; }
+  @keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.4; } }
 
   ::-webkit-scrollbar{ width:6px; }
   ::-webkit-scrollbar-thumb{ background:var(--line); border-radius:3px; }
@@ -169,6 +179,7 @@
   <div class="chat">
     <div class="messages" id="messages"></div>
     <div class="input-row">
+      <button class="mic-btn" id="micBtn" title="Voice input" type="button">🎤</button>
       <input id="chatInput" type="text" placeholder="e.g. logged 3hrs on Odd Cats traits today..." />
       <button id="sendBtn">Send</button>
     </div>
@@ -472,6 +483,56 @@ document.getElementById('sendBtn').onclick = handleSend;
 document.getElementById('chatInput').addEventListener('keydown', e=>{
   if(e.key === 'Enter') handleSend();
 });
+
+// Voice input via Web Speech API
+(function setupMic(){
+  const micBtn = document.getElementById('micBtn');
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if(!SpeechRecognition){
+    micBtn.style.display = 'none';
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.lang = 'en-IN';
+
+  let listening = false;
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    const input = document.getElementById('chatInput');
+    input.value = (input.value ? input.value + ' ' : '') + transcript;
+  };
+
+  recognition.onerror = (event) => {
+    console.error('Speech recognition error', event.error);
+    if(event.error === 'not-allowed' || event.error === 'service-not-allowed'){
+      alert('Microphone access was denied. Allow microphone permission for this site to use voice input.');
+    }
+  };
+
+  recognition.onend = () => {
+    listening = false;
+    micBtn.classList.remove('listening');
+  };
+
+  micBtn.onclick = () => {
+    if(listening){
+      recognition.stop();
+      return;
+    }
+    try{
+      recognition.start();
+      listening = true;
+      micBtn.classList.add('listening');
+    }catch(e){
+      console.error(e);
+    }
+  };
+})();
 
 document.getElementById('saveKey').onclick = ()=>{
   const key = document.getElementById('apiKey').value.trim();
