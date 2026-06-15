@@ -814,7 +814,8 @@ For "logged" hours, if Spud says they did more work, ADD to the existing logged 
   }
 }
 
-document.getElementById('sendBtn')?.onclick = handleSend;
+const sendBtnEl = document.getElementById('sendBtn');
+if(sendBtnEl) sendBtnEl.onclick = handleSend;
 document.getElementById('chatInput')?.addEventListener('keydown', e=>{
   if(e.key === 'Enter') handleSend();
 });
