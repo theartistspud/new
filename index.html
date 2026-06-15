@@ -8,6 +8,8 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Spud — Project OS</title>
+<script src="firebase-app.js"></script>
+<script src="firebase-firestore.js"></script>
 <script src="capacitor.js"></script>
 <style>
   :root{
@@ -316,8 +318,9 @@ let unsubscribe = null;
 
 async function initFirebase(){
   try{
-    const { initializeApp } = await import('./firebase-app.js');
-    const { getFirestore, doc, getDoc, setDoc, onSnapshot } = await import('./firebase-firestore.js');
+    // Use globally loaded Firebase from script tags
+    const { initializeApp } = window.FirebaseApp;
+    const { getFirestore, doc, getDoc, setDoc, onSnapshot } = window.FirebaseFirestore;
     const app = initializeApp(firebaseConfig);
     db = getFirestore(app);
     return { doc, getDoc, setDoc, onSnapshot };
