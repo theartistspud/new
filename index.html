@@ -185,6 +185,13 @@
   .shrs{ margin-left:auto; color:var(--text-faint); font-size:11px; }
   .sempty{ font-size:12px; color:var(--text-faint); font-style:italic; }
   .sopt-tag{ font-size:10px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.06em; font-weight:700; }
+  .progress-btns{ display:flex; gap:5px; flex-wrap:wrap; margin-top:10px; }
+  .prog-btn{ flex:1; min-width:80px; padding:6px 4px; border:1px solid var(--line); border-radius:8px; background:var(--panel-2); color:var(--text-dim); font-size:11px; font-weight:600; cursor:pointer; transition:all .15s; text-align:center; }
+  .prog-btn.active{ background:var(--panel); color:var(--text); }
+  .prog-btn:hover{ border-color:var(--own); color:var(--text); }
+  .sblock-inner{ margin-top:8px; padding:8px 10px; background:var(--panel-2); border-radius:10px; }
+  .sblock-time{ font-size:11px; color:var(--text-faint); font-weight:700; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px; }
+  .today-block{ border-color:var(--own) !important; box-shadow:0 0 0 1px rgba(155,140,255,0.2); }
 </style>
 </head>
 <body>
@@ -220,36 +227,23 @@
   <div class="label">Calendar — next few days</div>
   <div class="cal-list" id="calList"><div class="cempty">Connect Google Calendar in Claude to pull events here, or just type them into chat below.</div></div>
 
-  <div class="label">Log progress</div>
+  <div class="label">Update a project</div>
   <div class="panel" id="logPanel" style="display:flex; flex-direction:column; gap:12px;">
-
-    <!-- Tab row -->
     <div style="display:flex; gap:6px;">
-      <button class="tab-btn active" id="tabHours" onclick="switchTab('hours')">Log hours</button>
-      <button class="tab-btn" id="tabStatus" onclick="switchTab('status')">Update status</button>
+      <button class="tab-btn active" id="tabStatus" onclick="switchTab('status')">Update project</button>
+      <button class="tab-btn" id="tabAdd" onclick="switchTab('add')">Add project</button>
       <button class="tab-btn" id="tabTask" onclick="switchTab('task')">Add task</button>
     </div>
 
-    <!-- Log hours tab -->
-    <div id="tabContentHours">
-      <div style="font-size:12px; color:var(--text-dim); margin-bottom:10px;">Pick a project and enter how many hours you just worked.</div>
-      <select id="logProject" style="width:100%; background:var(--panel-2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13px; margin-bottom:10px;"></select>
-      <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
-        <div style="font-size:13px; color:var(--text-dim); white-space:nowrap;">Hours worked:</div>
-        <div style="display:flex; gap:6px; flex-wrap:wrap;" id="hourChips"></div>
-        <input id="customHours" type="number" min="0.5" max="12" step="0.5" placeholder="custom" style="width:70px; background:var(--panel-2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:8px; font-size:13px;" />
-      </div>
-      <button class="action-btn" onclick="logHours()">Log it ✓</button>
-    </div>
-
-    <!-- Update status tab -->
-    <div id="tabContentStatus" style="display:none;">
-      <div style="font-size:12px; color:var(--text-dim); margin-bottom:10px;">Update a project's deadline, status text, or priority.</div>
+    <!-- Update project tab -->
+    <div id="tabContentStatus">
+      <div style="font-size:12px; color:var(--text-dim); margin-bottom:10px;">Pick a project to update its deadline, goal, or priority.</div>
       <select id="statusProject" style="width:100%; background:var(--panel-2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13px; margin-bottom:10px;"></select>
       <div style="display:flex; flex-direction:column; gap:8px;">
         <input id="newDeadline" type="text" placeholder="New deadline (e.g. Jul 30)" style="background:var(--panel-2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13px;" />
-        <input id="newStatus" type="text" placeholder="New status note (optional)" style="background:var(--panel-2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13px;" />
-        <div style="display:flex; gap:6px; align-items:center;">
+        <input id="newGoal" type="text" placeholder="Update goal/notes (optional)" style="background:var(--panel-2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13px;" />
+        <input id="newHrsWk" type="number" placeholder="Weekly hours allocation (e.g. 6)" min="1" max="40" style="background:var(--panel-2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13px;" />
+        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
           <div style="font-size:12px; color:var(--text-dim);">Priority:</div>
           <button class="prio-chip active" id="prio1" onclick="selectPrio(1)">🔴 Top</button>
           <button class="prio-chip" id="prio2" onclick="selectPrio(2)">🟡 Light</button>
@@ -259,11 +253,34 @@
       <button class="action-btn" style="margin-top:10px;" onclick="updateStatus()">Update ✓</button>
     </div>
 
+    <!-- Add project tab -->
+    <div id="tabContentAdd" style="display:none;">
+      <div style="font-size:12px; color:var(--text-dim); margin-bottom:10px;">Add a new project — I'll calculate how many hours/week and slot it into your schedule.</div>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <input id="addName" type="text" placeholder="Project name" style="background:var(--panel-2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13px;" />
+        <input id="addGoal" type="text" placeholder="Goal (e.g. 2 character concept sheets)" style="background:var(--panel-2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13px;" />
+        <input id="addDeadline" type="text" placeholder="Deadline (e.g. Jul 30 or TBD)" style="background:var(--panel-2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13px;" />
+        <input id="addEstimate" type="number" placeholder="Estimated hours total (e.g. 20)" min="1" style="background:var(--panel-2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13px;" />
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button class="prio-chip" id="type-client" onclick="selectType('client')">Client</button>
+          <button class="prio-chip active" id="type-own" onclick="selectType('own')">Own IP</button>
+          <button class="prio-chip" id="type-biz" onclick="selectType('biz')">Biz dev</button>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <div style="font-size:12px; color:var(--text-dim); width:100%;">Priority:</div>
+          <button class="prio-chip active" id="addPrio1" onclick="selectAddPrio(1)">🔴 Top</button>
+          <button class="prio-chip" id="addPrio2" onclick="selectAddPrio(2)">🟡 Light</button>
+          <button class="prio-chip" id="addPrio3" onclick="selectAddPrio(3)">🟢 Drip</button>
+        </div>
+      </div>
+      <button class="action-btn" style="margin-top:10px;" onclick="addProject()">Add project ✓</button>
+    </div>
+
     <!-- Add task tab -->
     <div id="tabContentTask" style="display:none;">
-      <div style="font-size:12px; color:var(--text-dim); margin-bottom:10px;">Add a new reminder or one-off task.</div>
+      <div style="font-size:12px; color:var(--text-dim); margin-bottom:10px;">Add a reminder or one-off task.</div>
       <input id="newTaskText" type="text" placeholder="Task description..." style="width:100%; background:var(--panel-2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13px; margin-bottom:10px;" />
-      <div style="display:flex; gap:6px; margin-bottom:10px;">
+      <div style="display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap;">
         <button class="prio-chip active" id="freqOneoff" onclick="selectFreq('One-off')">One-off</button>
         <button class="prio-chip" id="freqDaily" onclick="selectFreq('Every day')">Every day</button>
         <button class="prio-chip" id="freqAlt" onclick="selectFreq('Every other day')">Every other day</button>
@@ -330,21 +347,22 @@ async function initFirebase(){
 
 const DEFAULT_STATE = {
   projects: [
-    { id:"deevils", name:"DeEvils — 1/1s (x2)", type:"client", color:"#FF8A5C", status:"~5-6h each", deadline:"TBD", logged:0, allocHrsPerWeek:8, totalEstimate:11, priority:1 },
-    { id:"archetype", name:"Archetype NFT — base concepts (x2)", type:"client", color:"#FF8A5C", status:"New client — concept stage, 2 characters", deadline:"TBD", logged:0, allocHrsPerWeek:6, totalEstimate:18, priority:1 },
-    { id:"oddcats", name:"Odd Cats collection", type:"own", color:"#9B8CFF", status:"100 traits + marketing art — light, steady pace", deadline:"Multi-week", logged:0, allocHrsPerWeek:6, totalEstimate:78, priority:2 },
-    { id:"cets", name:"CETS", type:"client", color:"#FF8A5C", status:"In progress", deadline:"Jun 20", logged:12, allocHrsPerWeek:3, totalEstimate:null, priority:3 },
-    { id:"spudverse", name:"SpudVerse", type:"own", color:"#9B8CFF", status:"Active build", deadline:"Jul 15", logged:8, allocHrsPerWeek:3, totalEstimate:null, priority:3 },
-    { id:"portfolio", name:"Portfolio update", type:"own", color:"#9B8CFF", status:"Steady drip", deadline:"Ongoing", logged:2, allocHrsPerWeek:2, totalEstimate:null, priority:3 },
-    { id:"biz", name:"Outreach + social", type:"biz", color:"#4ABDAC", status:"Ongoing", deadline:"Weekly", logged:3, allocHrsPerWeek:2, totalEstimate:null, priority:3 },
+    { id:"deevils", name:"DeEvils — 1/1s (x2)", type:"client", color:"#FF8A5C", status:"Not started", deadline:"TBD", progress:0, allocHrsPerWeek:8, totalEstimate:11, priority:1, goal:"Complete 2 x 1/1 illustrations", weeklySlots:[] },
+    { id:"archetype", name:"Archetype NFT — base concepts (x2)", type:"client", color:"#FF8A5C", status:"Not started", deadline:"TBD", progress:0, allocHrsPerWeek:6, totalEstimate:18, priority:1, goal:"Create 2 base character concept sheets", weeklySlots:[] },
+    { id:"oddcats", name:"Odd Cats collection", type:"own", color:"#9B8CFF", status:"Not started", deadline:"Multi-week", progress:0, allocHrsPerWeek:6, totalEstimate:78, priority:2, goal:"100 traits + 3 marketing illustrations", weeklySlots:[] },
+    { id:"cets", name:"CETS", type:"client", color:"#FF8A5C", status:"In progress", deadline:"Jun 20", progress:25, allocHrsPerWeek:3, totalEstimate:null, priority:3, goal:"Complete airdrop materials", weeklySlots:[] },
+    { id:"spudverse", name:"SpudVerse", type:"own", color:"#9B8CFF", status:"In progress", deadline:"Jul 15", progress:15, allocHrsPerWeek:3, totalEstimate:null, priority:3, goal:"100-piece NFT collection", weeklySlots:[] },
+    { id:"portfolio", name:"Portfolio update", type:"own", color:"#9B8CFF", status:"Ongoing", deadline:"Ongoing", progress:0, allocHrsPerWeek:2, totalEstimate:null, priority:3, goal:"Add/update one piece every other day", weeklySlots:["Mon eve","Wed eve","Fri eve"], fixed:true },
+    { id:"biz", name:"Outreach + social", type:"biz", color:"#4ABDAC", status:"Ongoing", deadline:"Weekly", progress:0, allocHrsPerWeek:2, totalEstimate:null, priority:3, goal:"Post on socials + reach out to 2 potential clients/week", weeklySlots:["Tue","Thu","Sat"], fixed:true },
   ],
   tasks: [
     { id:"t1", text:"Email the publisher re: Musalman follow-up", freq:"One-off", done:false },
     { id:"t2", text:"Re-export & rename all CETS PNGs", freq:"One-off", done:false },
     { id:"t3", text:"Make small portfolio progress (add/update one piece)", freq:"Every other day", done:false },
   ],
+  schedule: [], // generated weekly schedule [{day, blockId, projectId, startHour, startMin, durationMins, label}]
   messages: [
-    { role:"assistant", text:"Hey Spud — sync enabled across all your devices via Firebase. Updates on phone, PC, or tablet reflect everywhere within seconds." }
+    { role:"assistant", text:"Hey Spud — progress tracking is now status-based (Not started → Done), and your schedule assigns specific time blocks per project with phone reminders at the start of each one. Add a project with a goal + deadline and I'll slot it in." }
   ]
 };
 
@@ -447,88 +465,148 @@ function tagLabel(type){
   return type === "client" ? "Client" : type === "own" ? "Own IP" : "Biz dev";
 }
 
-// Spud's flexible work blocks (start/end are display strings; minutes = block length)
+// ---- Work blocks definition ----
 const WORK_BLOCKS = [
-  { id:'morning', label:'Morning', time:'9:30 – 11:30 AM', minutes:120, optional:false },
-  { id:'afternoon1', label:'Afternoon', time:'2:30 – 5:00 PM', minutes:150, optional:false },
-  { id:'afternoon2', label:'Late Afternoon', time:'5:00 – 8:00 PM', minutes:180, optional:false },
-  { id:'latenight', label:'Late Night', time:'11:30 PM – 1:30 AM', minutes:120, optional:true },
+  { id:'morning',    label:'Morning',       startH:9,  startM:30, endH:11, endM:30, mins:120 },
+  { id:'afternoon',  label:'Afternoon',     startH:14, startM:30, endH:17, endM:0,  mins:150 },
+  { id:'lateaft',    label:'Late Afternoon',startH:17, startM:0,  endH:20, endM:0,  mins:180 },
+  { id:'latenight',  label:'Late Night',    startH:23, startM:30, endH:25, endM:30, mins:120, optional:true },
 ];
+const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
 function fmtMins(m){
-  if(m <= 0) return '0m';
-  const h = Math.floor(m/60);
-  const mm = Math.round(m % 60);
-  if(h > 0 && mm > 0) return `${h}h ${mm}m`;
-  if(h > 0) return `${h}h`;
-  return `${mm}m`;
+  if(m<=0) return '0m';
+  const h=Math.floor(m/60), mm=Math.round(m%60);
+  return h>0 && mm>0 ? `${h}h ${mm}m` : h>0 ? `${h}h` : `${mm}m`;
 }
 
-// Greedy schedule generator: fills each work block with the highest-priority
-// projects that still have remaining work, capping at 2h per project per block
-// so the day has variety instead of one project hogging everything.
-function generateSchedule(){
-  const sorted = [...state.projects].sort((a,b)=>(a.priority||9)-(b.priority||9));
-  const remaining = {};
-  sorted.forEach(p=>{
-    if(p.totalEstimate != null){
-      // Fixed-scope project: remaining = estimate minus logged hours
-      remaining[p.id] = Math.max(0, (p.totalEstimate - (p.logged||0)) * 60);
-    } else {
-      // Ongoing/steady-drip project: daily target ~ weekly allocation / 5 working days
-      remaining[p.id] = Math.round(((p.allocHrsPerWeek||0) / 5) * 60);
-    }
+function fmtTime(h, m){
+  const hh = h > 23 ? h - 24 : h;
+  const ampm = hh < 12 ? 'AM' : 'PM';
+  const display = hh === 0 ? 12 : hh > 12 ? hh - 12 : hh;
+  return `${display}:${String(m).padStart(2,'0')} ${ampm}`;
+}
+
+// Generate a week's schedule dynamically:
+// - Fixed projects (portfolio, social) get their fixed slots
+// - Active dynamic projects fill remaining slots by priority
+// - Max 2h per project per block, max 1 project switch per block where possible
+function generateWeeklySchedule(){
+  const schedule = []; // [{day, block, projectId, durationMins, startH, startM, endH, endM}]
+  const DAYS_WORK = ['Mon','Tue','Wed','Thu','Fri']; // core days
+  const ALL_DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+  // Calculate remaining work per dynamic project
+  const dynamicProjects = state.projects
+    .filter(p => !p.fixed && p.progress < 100)
+    .sort((a,b)=>(a.priority||9)-(b.priority||9));
+
+  // Weekly mins needed per project (based on weekly allocation)
+  const weeklyMinsNeeded = {};
+  dynamicProjects.forEach(p=>{
+    weeklyMinsNeeded[p.id] = (p.allocHrsPerWeek || 0) * 60;
   });
 
-  const MAX_CHUNK = 120; // 2h cap per project per block
-  return WORK_BLOCKS.map(block=>{
-    let left = block.minutes;
-    const assigned = [];
-    for(const p of sorted){
-      if(left <= 0) break;
-      if(remaining[p.id] <= 0) continue;
-      const chunk = Math.min(left, remaining[p.id], MAX_CHUNK);
-      if(chunk <= 0) continue;
-      assigned.push({ project: p, minutes: chunk });
-      remaining[p.id] -= chunk;
-      left -= chunk;
-    }
-    return { block, assigned, leftover: left };
+  // Assign fixed projects first
+  state.projects.filter(p=>p.fixed).forEach(p=>{
+    (p.weeklySlots||[]).forEach(slot=>{
+      const day = slot.replace(/ eve$/,'').trim();
+      const isEve = slot.includes('eve');
+      const blockId = isEve ? 'lateaft' : 'afternoon';
+      const block = WORK_BLOCKS.find(b=>b.id===blockId) || WORK_BLOCKS[1];
+      schedule.push({
+        day, blockId: block.id, blockLabel: block.label,
+        projectId: p.id, durationMins: 60,
+        startH: block.startH, startM: block.startM,
+        endH: block.startH + 1, endM: block.startM,
+        fixed: true,
+      });
+    });
   });
+
+  // For each working day + block, fill with dynamic projects
+  ALL_DAYS.forEach(day=>{
+    WORK_BLOCKS.forEach(block=>{
+      let slotLeft = block.mins;
+      // Subtract fixed assignments in this slot
+      schedule.filter(s=>s.day===day && s.blockId===block.id && s.fixed).forEach(s=>{ slotLeft -= s.durationMins; });
+      if(slotLeft <= 0) return;
+
+      for(const p of dynamicProjects){
+        if(slotLeft <= 15) break;
+        if((weeklyMinsNeeded[p.id]||0) <= 0) continue;
+        const chunk = Math.min(slotLeft, weeklyMinsNeeded[p.id], 120); // max 2h per block
+        if(chunk < 15) continue;
+        const existingInBlock = schedule.find(s=>s.day===day && s.blockId===block.id && s.projectId===p.id);
+        if(existingInBlock){ existingInBlock.durationMins += chunk; }
+        else {
+          schedule.push({
+            day, blockId: block.id, blockLabel: block.label,
+            projectId: p.id, durationMins: chunk,
+            startH: block.startH, startM: block.startM,
+            endH: block.endH, endM: block.endM,
+          });
+        }
+        weeklyMinsNeeded[p.id] -= chunk;
+        slotLeft -= chunk;
+      }
+    });
+  });
+
+  return schedule;
 }
 
 function renderSchedule(){
   const wrap = document.getElementById('schedule');
+  if(!wrap) return;
   wrap.innerHTML = '';
-  const schedule = generateSchedule();
-  schedule.forEach(({block, assigned, leftover})=>{
-    const card = document.createElement('div');
-    card.className = 'sblock' + (block.optional ? ' optional' : '');
-    let inner = `
-      <div class="srow1">
-        <div class="slabel">${block.label}${block.optional ? ' <span class="sopt-tag">if up for it</span>' : ''}</div>
-        <div class="stime">${block.time}</div>
-      </div>
-      <div class="sassigns">`;
-    if(assigned.length === 0){
-      inner += `<div class="sempty">Free / buffer time — nothing urgent left to schedule.</div>`;
-    } else {
-      assigned.forEach(a=>{
-        inner += `
-          <div class="sassign">
-            <div class="sdot" style="background:${a.project.color}"></div>
-            <div>${a.project.name}</div>
-            <div class="shrs">${fmtMins(a.minutes)}</div>
-          </div>`;
+
+  const todayIdx = (new Date().getDay() + 6) % 7;
+  const todayName = DAYS[todayIdx];
+  const schedule = generateWeeklySchedule();
+
+  // Show today first, then rest of week
+  const orderedDays = [...DAYS.slice(todayIdx), ...DAYS.slice(0, todayIdx)].slice(0,4);
+
+  orderedDays.forEach(day=>{
+    const daySlots = schedule.filter(s=>s.day===day);
+    if(daySlots.length === 0) return;
+
+    // Group by block
+    const byBlock = {};
+    daySlots.forEach(s=>{
+      if(!byBlock[s.blockId]) byBlock[s.blockId] = [];
+      byBlock[s.blockId].push(s);
+    });
+
+    const dayCard = document.createElement('div');
+    dayCard.className = 'sblock' + (day===todayName ? ' today-block' : '');
+
+    let html = `<div class="srow1"><div class="slabel">${day===todayName?'Today — '+day:day}</div></div>`;
+
+    WORK_BLOCKS.forEach(block=>{
+      const slots = byBlock[block.id];
+      if(!slots || slots.length===0) return;
+      html += `<div class="sblock-inner">
+        <div class="sblock-time">${fmtTime(block.startH,block.startM)} – ${fmtTime(block.endH,block.endM)}</div>
+        <div class="sassigns">`;
+      slots.forEach(s=>{
+        const proj = state.projects.find(p=>p.id===s.projectId);
+        if(!proj) return;
+        html += `<div class="sassign">
+          <div class="sdot" style="background:${proj.color}"></div>
+          <div style="flex:1">${proj.name}</div>
+          <div class="shrs">${fmtMins(s.durationMins)}</div>
+        </div>`;
       });
-      if(leftover > 5){
-        inner += `<div class="sempty">+ ${fmtMins(leftover)} free</div>`;
-      }
-    }
-    inner += `</div>`;
-    card.innerHTML = inner;
-    wrap.appendChild(card);
+      html += `</div></div>`;
+    });
+
+    dayCard.innerHTML = html;
+    wrap.appendChild(dayCard);
   });
+
+  if(wrap.innerHTML === '') wrap.innerHTML = '<div style="font-size:13px;color:var(--text-faint);padding:10px 0">All projects complete — add a new project to generate a schedule.</div>';
 }
 
 async function loadCalendarEvents(){
@@ -582,10 +660,27 @@ function renderDate(){
     new Date().toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'short' });
 }
 
+async function setProgress(projId, value){
+  const proj = state.projects.find(p=>p.id===projId);
+  if(!proj) return;
+  proj.progress = value;
+  if(value === 100) proj.status = 'Done';
+  else if(value === 0) proj.status = 'Not started';
+  else if(value === 25) proj.status = 'In progress';
+  else if(value === 50) proj.status = 'Halfway there';
+  else if(value === 75) proj.status = 'Nearly done';
+  renderProjects();
+  renderSchedule();
+  renderNudge();
+  await saveState();
+  showFeedback(`✓ ${proj.name} → ${PROGRESS_STEPS.find(s=>s.value===value)?.label}`);
+}
+
 function renderNudge(){
   const candidates = [];
   state.projects.forEach(p=>{
-    if(p.totalEstimate && p.logged === 0) candidates.push(`${p.name} hasn't been started yet — ${p.totalEstimate}h estimated, worth chunking into daily batches.`);
+    if(p.progress === 0 && p.priority <= 2) candidates.push(`${p.name} hasn't been started yet — it's priority ${p.priority}. Jump in today.`);
+    if(p.progress > 0 && p.progress < 100 && p.priority === 1) candidates.push(`${p.name} is ${p.progress}% done — keep the momentum going, it's your top priority.`);
   });
   state.tasks.forEach(t=>{
     if(!t.done && t.freq === "One-off") candidates.push(`Still pending: ${t.text}`);
@@ -599,34 +694,42 @@ function renderNudge(){
   document.getElementById('nudgeBar').style.display = 'flex';
 }
 
+const PROGRESS_STEPS = [
+  { value:0,   label:'Not started', color:'var(--line)' },
+  { value:25,  label:'In progress', color:'#FFC857' },
+  { value:50,  label:'Halfway',     color:'#9B8CFF' },
+  { value:75,  label:'Nearly done', color:'#4ABDAC' },
+  { value:100, label:'Done ✓',      color:'#1DB954' },
+];
+
 function renderProjects(){
   const wrap = document.getElementById('projects');
   wrap.innerHTML = '';
   const sorted = [...state.projects].sort((a,b)=>(a.priority||9)-(b.priority||9));
   sorted.forEach(p=>{
-    const denom = p.totalEstimate ? p.totalEstimate : (p.allocHrsPerWeek * 4);
-    const pct = Math.max(0, Math.min(100, Math.round((p.logged / denom) * 100)));
-    const estLine = p.totalEstimate ? `${p.logged}h logged / ~${p.totalEstimate}h est.` : `${p.logged}h logged`;
+    const pct = p.progress || 0;
+    const step = PROGRESS_STEPS.reduce((prev,curr)=> Math.abs(curr.value-pct) < Math.abs(prev.value-pct) ? curr : prev);
     const card = document.createElement('div');
     card.className = 'pcard' + (p.priority===1 ? ' p1' : '');
-    const prioLabel = p.priority===1 ? 'Top priority right now' : p.priority===2 ? 'Second priority — light pace' : 'Important, not urgent — steady drip';
+    const prioLabel = p.priority===1 ? 'Top priority' : p.priority===2 ? 'Second priority' : 'Steady drip';
     card.innerHTML = `
-      <div class="prio ${p.priority===1?'p1':p.priority===2?'p2':''}">${prioLabel}</div>
+      <div class="prio ${p.priority===1?'p1':p.priority===2?'p2':''}">${prioLabel}${p.fixed?' · Fixed recurring':''}</div>
       <div class="prow1">
         <div>
           <div class="pname">${p.name}</div>
-          <div class="pmeta">${p.status} · due ${p.deadline}</div>
+          <div class="pmeta">${p.goal||p.status} · due ${p.deadline}</div>
         </div>
         <span class="ptag ${p.type}">${tagLabel(p.type)}</span>
       </div>
-      <div class="pbar-bg"><div class="pbar-fill" style="width:${pct}%; background:${p.color}"></div></div>
-      <div class="pfoot"><span>${estLine}</span><span>~${p.allocHrsPerWeek}h/wk</span></div>
+      <div class="pbar-bg"><div class="pbar-fill" style="width:${pct}%; background:${step.color}"></div></div>
+      <div class="pfoot">
+        <span style="color:${step.color}; font-weight:600;">${step.label}</span>
+        <span>~${p.allocHrsPerWeek}h/wk</span>
+      </div>
+      <div class="progress-btns" data-id="${p.id}">
+        ${PROGRESS_STEPS.map(s=>`<button class="prog-btn${pct===s.value?' active':''}" onclick="setProgress('${p.id}',${s.value})" style="${pct===s.value?'border-color:'+s.color+';color:'+s.color:''}">${s.label}</button>`).join('')}
+      </div>
     `;
-    card.onclick = ()=>{
-      const input = document.getElementById('chatInput');
-      input.value = `${p.name}: `;
-      input.focus();
-    };
     wrap.appendChild(card);
   });
 }
@@ -866,37 +969,21 @@ document.getElementById('saveKey').onclick = ()=>{
 })();
 
 // ---- Manual Update UI ----
-let selectedHours = 1;
 let selectedPrio = 1;
+let selectedAddPrio = 1;
+let selectedType = 'own';
 let selectedFreq = 'One-off';
 
 function populateProjectSelects(){
-  ['logProject','statusProject'].forEach(id=>{
+  ['statusProject'].forEach(id=>{
     const sel = document.getElementById(id);
     if(!sel) return;
     sel.innerHTML = state.projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
   });
 }
 
-function renderHourChips(){
-  const wrap = document.getElementById('hourChips');
-  if(!wrap) return;
-  wrap.innerHTML = '';
-  [0.5,1,1.5,2,3,4].forEach(h=>{
-    const btn = document.createElement('button');
-    btn.className = 'hour-chip' + (h===selectedHours?' active':'');
-    btn.textContent = h+'h';
-    btn.onclick = ()=>{
-      selectedHours = h;
-      document.getElementById('customHours').value = '';
-      renderHourChips();
-    };
-    wrap.appendChild(btn);
-  });
-}
-
 function switchTab(tab){
-  ['hours','status','task'].forEach(t=>{
+  ['status','add','task'].forEach(t=>{
     const content = document.getElementById('tabContent'+t.charAt(0).toUpperCase()+t.slice(1));
     const btn = document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1));
     if(content) content.style.display = t===tab?'block':'none';
@@ -907,9 +994,17 @@ function switchTab(tab){
 
 function selectPrio(n){
   selectedPrio = n;
-  [1,2,3].forEach(i=>{
-    document.getElementById('prio'+i)?.classList.toggle('active', i===n);
-  });
+  [1,2,3].forEach(i=> document.getElementById('prio'+i)?.classList.toggle('active', i===n));
+}
+
+function selectAddPrio(n){
+  selectedAddPrio = n;
+  [1,2,3].forEach(i=> document.getElementById('addPrio'+i)?.classList.toggle('active', i===n));
+}
+
+function selectType(t){
+  selectedType = t;
+  ['client','own','biz'].forEach(v=> document.getElementById('type-'+v)?.classList.toggle('active', v===t));
 }
 
 function selectFreq(f){
@@ -924,32 +1019,47 @@ function showFeedback(msg){
   if(el){ el.textContent = msg; setTimeout(()=>{ el.textContent=''; }, 2500); }
 }
 
-async function logHours(){
-  const projId = document.getElementById('logProject').value;
-  const custom = parseFloat(document.getElementById('customHours').value);
-  const hrs = !isNaN(custom) && custom > 0 ? custom : selectedHours;
-  const proj = state.projects.find(p=>p.id===projId);
-  if(!proj) return;
-  proj.logged = Math.round((proj.logged + hrs) * 10) / 10;
-  renderProjects(); renderSchedule(); renderNudge();
-  await saveState();
-  showFeedback(`✓ +${hrs}h on ${proj.name} — ${proj.logged}h total`);
-}
-
 async function updateStatus(){
   const projId = document.getElementById('statusProject').value;
   const deadline = document.getElementById('newDeadline').value.trim();
-  const status = document.getElementById('newStatus').value.trim();
+  const goal = document.getElementById('newGoal').value.trim();
+  const hrsWk = parseFloat(document.getElementById('newHrsWk').value);
   const proj = state.projects.find(p=>p.id===projId);
   if(!proj) return;
   if(deadline) proj.deadline = deadline;
-  if(status) proj.status = status;
+  if(goal) proj.goal = goal;
+  if(!isNaN(hrsWk) && hrsWk > 0) proj.allocHrsPerWeek = hrsWk;
   proj.priority = selectedPrio;
   renderProjects(); renderSchedule();
   await saveState();
   document.getElementById('newDeadline').value = '';
-  document.getElementById('newStatus').value = '';
+  document.getElementById('newGoal').value = '';
+  document.getElementById('newHrsWk').value = '';
   showFeedback(`✓ ${proj.name} updated`);
+}
+
+async function addProject(){
+  const name = document.getElementById('addName').value.trim();
+  const goal = document.getElementById('addGoal').value.trim();
+  const deadline = document.getElementById('addDeadline').value.trim() || 'TBD';
+  const estimate = parseFloat(document.getElementById('addEstimate').value);
+  if(!name){ showFeedback('Enter a project name first.'); return; }
+  const hrsWk = !isNaN(estimate) ? Math.max(2, Math.round(estimate / 4)) : 4;
+  const colorMap = { client:'#FF8A5C', own:'#9B8CFF', biz:'#4ABDAC' };
+  const id = 'p' + Date.now();
+  state.projects.push({
+    id, name, type: selectedType, color: colorMap[selectedType],
+    goal: goal || name, deadline, progress: 0, status: 'Not started',
+    allocHrsPerWeek: hrsWk, totalEstimate: !isNaN(estimate) ? estimate : null,
+    priority: selectedAddPrio, weeklySlots: [], fixed: false,
+  });
+  renderProjects(); renderSchedule(); populateProjectSelects();
+  await saveState();
+  document.getElementById('addName').value = '';
+  document.getElementById('addGoal').value = '';
+  document.getElementById('addDeadline').value = '';
+  document.getElementById('addEstimate').value = '';
+  showFeedback(`✓ ${name} added — scheduled at ~${hrsWk}h/wk`);
 }
 
 async function addTask(){
@@ -979,7 +1089,6 @@ function updateChatVisibility(){
   renderNudge();
   renderMessages();
   populateProjectSelects();
-  renderHourChips();
   updateChatVisibility();
   await saveState();
 
@@ -1012,13 +1121,12 @@ function updateChatVisibility(){
 // ---- Capacitor Local Notifications ----
 async function scheduleLocalNotifications(){
   const LN = window.Capacitor?.Plugins?.LocalNotifications;
-  if(!LN) return; // Not running inside the native app — skip
+  if(!LN) return;
 
   try{
     const perm = await LN.requestPermissions();
     if(perm.display !== 'granted') return;
 
-    // Cancel previously scheduled ones to avoid duplicates on re-launch
     const pending = await LN.getPending();
     if(pending.notifications.length){
       await LN.cancel({ notifications: pending.notifications.map(n => ({ id: n.id })) });
@@ -1026,17 +1134,63 @@ async function scheduleLocalNotifications(){
 
     const notifications = [];
     let id = 1;
+    const monthMap = { Jan:0, Feb:1, Mar:2, Apr:3, May:4, Jun:5, Jul:6, Aug:7, Sep:8, Oct:9, Nov:10, Dec:11 };
 
-    // Daily check-in reminder at 9am
-    notifications.push({
-      id: id++,
-      title: 'Project OS',
-      body: 'Morning check-in: open the app and see what needs attention today.',
-      schedule: { on: { hour: 9, minute: 0 }, every: 'day' },
+    // Schedule block-start reminders for each day this week
+    const todayIdx = (new Date().getDay() + 6) % 7;
+    const schedule = generateWeeklySchedule();
+
+    // Group schedule by day+block for notification text
+    const byDayBlock = {};
+    schedule.forEach(s=>{
+      const key = s.day+'_'+s.blockId;
+      if(!byDayBlock[key]) byDayBlock[key] = [];
+      byDayBlock[key].push(s);
     });
 
-    // Per-project deadline reminders (1 day before, if deadline looks like a date)
-    const monthMap = { Jan:0, Feb:1, Mar:2, Apr:3, May:4, Jun:5, Jul:6, Aug:7, Sep:8, Oct:9, Nov:10, Dec:11 };
+    DAYS.forEach((day, dIdx)=>{
+      const daysFromToday = (dIdx - todayIdx + 7) % 7;
+      const baseDate = new Date();
+      baseDate.setDate(baseDate.getDate() + daysFromToday);
+
+      WORK_BLOCKS.forEach(block=>{
+        const key = day+'_'+block.id;
+        const slots = byDayBlock[key];
+        if(!slots || slots.length === 0) return;
+
+        const projects = slots.map(s=>{
+          const p = state.projects.find(pr=>pr.id===s.projectId);
+          return p ? `${p.name} (${fmtMins(s.durationMins)})` : '';
+        }).filter(Boolean).join(', ');
+
+        const notifDate = new Date(baseDate);
+        let h = block.startH; if(h >= 24) h -= 24;
+        notifDate.setHours(h, block.startM, 0, 0);
+
+        if(notifDate > new Date()){
+          notifications.push({
+            id: id++,
+            title: `🎨 ${block.label} block — time to work`,
+            body: projects,
+            schedule: { at: notifDate },
+          });
+
+          // End-of-block "wrap up" nudge
+          const endDate = new Date(notifDate);
+          endDate.setMinutes(endDate.getMinutes() + block.mins - 10);
+          if(endDate > new Date()){
+            notifications.push({
+              id: id++,
+              title: `⏱ Wrapping up ${block.label}`,
+              body: `10 mins left — save your work and prep for the next block.`,
+              schedule: { at: endDate },
+            });
+          }
+        }
+      });
+    });
+
+    // Deadline reminders
     state.projects.forEach(p=>{
       const m = p.deadline.match(/^([A-Za-z]{3})\s+(\d{1,2})$/);
       if(m && monthMap[m[1]] !== undefined){
@@ -1045,51 +1199,18 @@ async function scheduleLocalNotifications(){
         let date = new Date(year, monthMap[m[1]], parseInt(m[2]), 9, 0, 0);
         if(date < now) date.setFullYear(year + 1);
         const dayBefore = new Date(date.getTime() - 24*60*60*1000);
-        if(dayBefore > now){
-          notifications.push({
-            id: id++,
-            title: 'Deadline tomorrow',
-            body: `${p.name} is due tomorrow (${p.deadline}).`,
-            schedule: { at: dayBefore },
-          });
-        }
-        if(date > now){
-          notifications.push({
-            id: id++,
-            title: 'Deadline today',
-            body: `${p.name} is due today.`,
-            schedule: { at: date },
-          });
-        }
+        if(dayBefore > now) notifications.push({ id:id++, title:'Deadline tomorrow', body:`${p.name} is due tomorrow.`, schedule:{ at: dayBefore } });
+        if(date > now) notifications.push({ id:id++, title:'Deadline today', body:`${p.name} is due today!`, schedule:{ at: date } });
       }
     });
 
-    // Recurring task reminders
-    state.tasks.forEach(t=>{
-      if(t.done) return;
-      if(t.freq === 'Every other day'){
-        notifications.push({
-          id: id++,
-          title: 'Project OS reminder',
-          body: t.text,
-          schedule: { on: { hour: 18, minute: 0 }, every: 'day' }, // daily at 6pm; check it off once done
-        });
-      } else if(t.freq === 'One-off'){
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        tomorrow.setHours(9, 0, 0, 0);
-        notifications.push({
-          id: id++,
-          title: 'Project OS reminder',
-          body: t.text,
-          schedule: { at: tomorrow },
-        });
-      }
+    // One-off task reminders (next morning)
+    state.tasks.filter(t=>!t.done && t.freq==='One-off').forEach(t=>{
+      const d = new Date(); d.setDate(d.getDate()+1); d.setHours(9,0,0,0);
+      notifications.push({ id:id++, title:'Pending task', body:t.text, schedule:{ at:d } });
     });
 
-    if(notifications.length){
-      await LN.schedule({ notifications });
-    }
+    if(notifications.length) await LN.schedule({ notifications });
   }catch(e){
     console.error('Local notification scheduling failed', e);
   }
