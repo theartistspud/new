@@ -8,6 +8,7 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Spud — Project OS</title>
+<script src="capacitor.js"></script>
 <style>
   :root{
     --bg:#16151A;
@@ -146,6 +147,44 @@
 
   ::-webkit-scrollbar{ width:6px; }
   ::-webkit-scrollbar-thumb{ background:var(--line); border-radius:3px; }
+  .tab-btn{
+    flex:1; padding:8px 6px; border:1px solid var(--line); border-radius:8px;
+    background:var(--panel-2); color:var(--text-dim); font-size:12px; font-weight:600;
+    cursor:pointer; transition:all .15s;
+  }
+  .tab-btn.active{ background:var(--own); color:#16151A; border-color:var(--own); }
+  .hour-chip{
+    padding:6px 12px; border-radius:20px; border:1px solid var(--line);
+    background:var(--panel-2); color:var(--text-dim); font-size:13px; font-weight:600;
+    cursor:pointer; transition:all .15s;
+  }
+  .hour-chip.active{ background:var(--own); color:#16151A; border-color:var(--own); }
+  .prio-chip{
+    padding:6px 12px; border-radius:20px; border:1px solid var(--line);
+    background:var(--panel-2); color:var(--text-dim); font-size:12px; font-weight:600;
+    cursor:pointer; transition:all .15s; white-space:nowrap;
+  }
+  .prio-chip.active{ background:var(--panel); color:var(--text); border-color:var(--own); }
+  .action-btn{
+    width:100%; padding:12px; border:none; border-radius:10px;
+    background:var(--own); color:#16151A; font-size:14px; font-weight:700;
+    cursor:pointer; transition:opacity .15s;
+  }
+  .action-btn:active{ opacity:0.8; }
+  .panel{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; margin-bottom:0; }
+
+  .schedule{ display:flex; flex-direction:column; gap:8px; }
+  .sblock{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:12px 16px; }
+  .sblock.optional{ border-style:dashed; opacity:0.85; }
+  .srow1{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; }
+  .slabel{ font-size:13px; font-weight:700; }
+  .stime{ font-size:11px; color:var(--text-faint); }
+  .sassigns{ display:flex; flex-direction:column; gap:5px; }
+  .sassign{ display:flex; align-items:center; gap:8px; font-size:12px; }
+  .sdot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .shrs{ margin-left:auto; color:var(--text-faint); font-size:11px; }
+  .sempty{ font-size:12px; color:var(--text-faint); font-style:italic; }
+  .sopt-tag{ font-size:10px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.06em; font-weight:700; }
 </style>
 </head>
 <body>
@@ -155,7 +194,10 @@
       <h1>Spud — Project OS</h1>
       <div class="sub">your second brain. talk to it like an assistant.</div>
     </div>
-    <div class="date" id="dateDisplay"></div>
+    <div style="text-align:right;">
+      <div class="date" id="dateDisplay"></div>
+      <div id="syncStatus" style="font-size:11px; margin-top:4px;">connecting…</div>
+    </div>
   </div>
 
   <div class="nudge" id="nudgeBar" style="display:none">
@@ -169,29 +211,73 @@
   <div class="label">Reminders & one-off tasks</div>
   <div class="tasks" id="tasks"></div>
 
+  <div class="label">Today's schedule — based on your priorities</div>
+  <div class="schedule" id="schedule"></div>
+
   <div class="label">This week</div>
   <div class="week" id="week"></div>
 
   <div class="label">Calendar — next few days</div>
   <div class="cal-list" id="calList"><div class="cempty">Connect Google Calendar in Claude to pull events here, or just type them into chat below.</div></div>
 
-  <div class="label">Talk to it</div>
-  <div class="chat">
-    <div class="messages" id="messages"></div>
-    <div class="input-row">
-      <button class="mic-btn" id="micBtn" title="Voice input" type="button">🎤</button>
-      <input id="chatInput" type="text" placeholder="e.g. logged 3hrs on Odd Cats traits today..." />
-      <button id="sendBtn">Send</button>
+  <div class="label">Log progress</div>
+  <div class="panel" id="logPanel" style="display:flex; flex-direction:column; gap:12px;">
+
+    <!-- Tab row -->
+    <div style="display:flex; gap:6px;">
+      <button class="tab-btn active" id="tabHours" onclick="switchTab('hours')">Log hours</button>
+      <button class="tab-btn" id="tabStatus" onclick="switchTab('status')">Update status</button>
+      <button class="tab-btn" id="tabTask" onclick="switchTab('task')">Add task</button>
     </div>
+
+    <!-- Log hours tab -->
+    <div id="tabContentHours">
+      <div style="font-size:12px; color:var(--text-dim); margin-bottom:10px;">Pick a project and enter how many hours you just worked.</div>
+      <select id="logProject" style="width:100%; background:var(--panel-2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13px; margin-bottom:10px;"></select>
+      <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
+        <div style="font-size:13px; color:var(--text-dim); white-space:nowrap;">Hours worked:</div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;" id="hourChips"></div>
+        <input id="customHours" type="number" min="0.5" max="12" step="0.5" placeholder="custom" style="width:70px; background:var(--panel-2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:8px; font-size:13px;" />
+      </div>
+      <button class="action-btn" onclick="logHours()">Log it ✓</button>
+    </div>
+
+    <!-- Update status tab -->
+    <div id="tabContentStatus" style="display:none;">
+      <div style="font-size:12px; color:var(--text-dim); margin-bottom:10px;">Update a project's deadline, status text, or priority.</div>
+      <select id="statusProject" style="width:100%; background:var(--panel-2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13px; margin-bottom:10px;"></select>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <input id="newDeadline" type="text" placeholder="New deadline (e.g. Jul 30)" style="background:var(--panel-2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13px;" />
+        <input id="newStatus" type="text" placeholder="New status note (optional)" style="background:var(--panel-2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13px;" />
+        <div style="display:flex; gap:6px; align-items:center;">
+          <div style="font-size:12px; color:var(--text-dim);">Priority:</div>
+          <button class="prio-chip active" id="prio1" onclick="selectPrio(1)">🔴 Top</button>
+          <button class="prio-chip" id="prio2" onclick="selectPrio(2)">🟡 Light</button>
+          <button class="prio-chip" id="prio3" onclick="selectPrio(3)">🟢 Drip</button>
+        </div>
+      </div>
+      <button class="action-btn" style="margin-top:10px;" onclick="updateStatus()">Update ✓</button>
+    </div>
+
+    <!-- Add task tab -->
+    <div id="tabContentTask" style="display:none;">
+      <div style="font-size:12px; color:var(--text-dim); margin-bottom:10px;">Add a new reminder or one-off task.</div>
+      <input id="newTaskText" type="text" placeholder="Task description..." style="width:100%; background:var(--panel-2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13px; margin-bottom:10px;" />
+      <div style="display:flex; gap:6px; margin-bottom:10px;">
+        <button class="prio-chip active" id="freqOneoff" onclick="selectFreq('One-off')">One-off</button>
+        <button class="prio-chip" id="freqDaily" onclick="selectFreq('Every day')">Every day</button>
+        <button class="prio-chip" id="freqAlt" onclick="selectFreq('Every other day')">Every other day</button>
+      </div>
+      <button class="action-btn" onclick="addTask()">Add task ✓</button>
+    </div>
+
+    <div id="logFeedback" style="font-size:13px; color:var(--biz); min-height:18px; font-weight:600;"></div>
   </div>
 
-  <div class="label">Settings</div>
-  <div class="tasks" style="padding:14px 16px; display:flex; flex-direction:column; gap:10px;">
-    <div style="font-size:12px; color:var(--text-dim); line-height:1.5;">
-      To enable the chat assistant, paste an API key below. Works with Anthropic (Claude) or Google (Gemini) keys — pick the matching provider.
-      Stored only in this browser (localStorage), never sent anywhere except directly to that provider.
-    </div>
-    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+  <div class="label">Assistant (optional)</div>
+  <div class="panel" style="font-size:13px; color:var(--text-dim); line-height:1.6;">
+    Add an API key to enable the AI chat assistant — it can understand natural language updates and give advice. Works with Claude (Anthropic) or Gemini (Google).
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
       <select id="provider" style="background:var(--panel-2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:13px;">
         <option value="anthropic">Anthropic (Claude)</option>
         <option value="gemini">Google (Gemini)</option>
@@ -199,14 +285,52 @@
       <input id="apiKey" type="password" placeholder="API key" style="flex:1; min-width:160px; background:var(--panel-2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:13px;" />
       <button id="saveKey" style="background:var(--own); color:#16151A; border:none; border-radius:8px; padding:8px 14px; font-weight:700; font-size:13px; cursor:pointer;">Save</button>
     </div>
+    <div id="chatWrap" style="margin-top:12px; display:none;">
+      <div class="chat">
+        <div class="messages" id="messages"></div>
+        <div class="input-row">
+          <button class="mic-btn" id="micBtn" title="Voice input" type="button">🎤</button>
+          <input id="chatInput" type="text" placeholder="e.g. logged 3hrs on Odd Cats today..." />
+          <button id="sendBtn">Send</button>
+        </div>
+      </div>
+    </div>
   </div>
 
 <script>
 const STORAGE_KEY = 'spud-os-state-v1';
+const FIREBASE_DOC = 'users/spud'; // single doc for all state
+
+// ---- Firebase setup ----
+const firebaseConfig = {
+  apiKey: "AIzaSyA_rrT9szMGXHlY43Vdy7TZys6UPL6dn_E",
+  authDomain: "spud-project-os.firebaseapp.com",
+  projectId: "spud-project-os",
+  storageBucket: "spud-project-os.firebasestorage.app",
+  messagingSenderId: "998800303898",
+  appId: "1:998800303898:web:80a30537c64610de326ea3"
+};
+
+let db = null;
+let unsubscribe = null;
+
+async function initFirebase(){
+  try{
+    const { initializeApp } = await import('./firebase-app.js');
+    const { getFirestore, doc, getDoc, setDoc, onSnapshot } = await import('./firebase-firestore.js');
+    const app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    return { doc, getDoc, setDoc, onSnapshot };
+  }catch(e){
+    console.error('Firebase init failed', e);
+    return null;
+  }
+}
 
 const DEFAULT_STATE = {
   projects: [
     { id:"deevils", name:"DeEvils — 1/1s (x2)", type:"client", color:"#FF8A5C", status:"~5-6h each", deadline:"TBD", logged:0, allocHrsPerWeek:8, totalEstimate:11, priority:1 },
+    { id:"archetype", name:"Archetype NFT — base concepts (x2)", type:"client", color:"#FF8A5C", status:"New client — concept stage, 2 characters", deadline:"TBD", logged:0, allocHrsPerWeek:6, totalEstimate:18, priority:1 },
     { id:"oddcats", name:"Odd Cats collection", type:"own", color:"#9B8CFF", status:"100 traits + marketing art — light, steady pace", deadline:"Multi-week", logged:0, allocHrsPerWeek:6, totalEstimate:78, priority:2 },
     { id:"cets", name:"CETS", type:"client", color:"#FF8A5C", status:"In progress", deadline:"Jun 20", logged:12, allocHrsPerWeek:3, totalEstimate:null, priority:3 },
     { id:"spudverse", name:"SpudVerse", type:"own", color:"#9B8CFF", status:"Active build", deadline:"Jul 15", logged:8, allocHrsPerWeek:3, totalEstimate:null, priority:3 },
@@ -219,32 +343,237 @@ const DEFAULT_STATE = {
     { id:"t3", text:"Make small portfolio progress (add/update one piece)", freq:"Every other day", done:false },
   ],
   messages: [
-    { role:"assistant", text:"Hey Spud — your dashboard's set up. Odd Cats is the big one (~65–90h, using 78 as a working estimate). Tell me as you go: hours logged, deadline shifts, new tasks, whatever. I'll keep this updated." }
+    { role:"assistant", text:"Hey Spud — sync enabled across all your devices via Firebase. Updates on phone, PC, or tablet reflect everywhere within seconds." }
   ]
 };
 
 let state = null;
+let _firestoreFns = null;
+
+// Show sync status in UI
+function setSyncStatus(msg, color='var(--text-faint)'){
+  let el = document.getElementById('syncStatus');
+  if(!el) return;
+  el.textContent = msg;
+  el.style.color = color;
+}
 
 async function loadState(){
+  // Always load localStorage first for instant render
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) throw new Error('no saved state');
-    state = JSON.parse(raw);
+    if(raw) state = JSON.parse(raw);
+  }catch(e){}
+
+  // Then try Firebase
+  try{
+    if(!_firestoreFns) _firestoreFns = await initFirebase();
+    if(_firestoreFns && db){
+      const { doc, getDoc, onSnapshot } = _firestoreFns;
+      const ref = doc(db, FIREBASE_DOC);
+      const snap = await getDoc(ref);
+      if(snap.exists()){
+        state = snap.data();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        setSyncStatus('✓ Synced', 'var(--biz)');
+      } else {
+        // First time — push defaults to Firebase
+        if(!state) state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+        const { setDoc } = _firestoreFns;
+        await setDoc(ref, state);
+        setSyncStatus('✓ Synced', 'var(--biz)');
+      }
+      // Listen for real-time updates from other devices
+      if(unsubscribe) unsubscribe();
+      unsubscribe = onSnapshot(ref, (snap)=>{
+        if(snap.exists()){
+          const incoming = snap.data();
+          // Only update if it's genuinely different (avoid re-render loops)
+          if(JSON.stringify(incoming) !== JSON.stringify(state)){
+            state = incoming;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            renderProjects();
+            renderTasks();
+            renderSchedule();
+            renderWeek();
+            renderNudge();
+            populateProjectSelects();
+            setSyncStatus('↓ Updated from another device', 'var(--own)');
+            setTimeout(()=>setSyncStatus('✓ Synced', 'var(--biz)'), 3000);
+          }
+        }
+      });
+    }
   }catch(e){
-    state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+    setSyncStatus('⚠ Offline — changes saved locally', '#FFC857');
+    console.warn('Firebase unavailable, using localStorage', e);
   }
+
+  if(!state) state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+
+  // Migration: add new default projects missing from saved state
+  DEFAULT_STATE.projects.forEach(defaultProj=>{
+    if(!state.projects.find(p=>p.id===defaultProj.id)){
+      state.projects.push(JSON.parse(JSON.stringify(defaultProj)));
+    }
+  });
 }
 
 async function saveState(){
+  // Save to localStorage instantly
   try{
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }catch(e){}
+
+  // Push to Firebase
+  try{
+    if(!_firestoreFns) _firestoreFns = await initFirebase();
+    if(_firestoreFns && db){
+      const { doc, setDoc } = _firestoreFns;
+      await setDoc(doc(db, FIREBASE_DOC), state);
+      setSyncStatus('✓ Synced', 'var(--biz)');
+    }
   }catch(e){
-    console.error('save failed', e);
+    setSyncStatus('⚠ Offline — saved locally', '#FFC857');
+  }
+
+  if(window.Capacitor?.Plugins?.LocalNotifications){
+    scheduleLocalNotifications();
   }
 }
 
 function tagLabel(type){
   return type === "client" ? "Client" : type === "own" ? "Own IP" : "Biz dev";
+}
+
+// Spud's flexible work blocks (start/end are display strings; minutes = block length)
+const WORK_BLOCKS = [
+  { id:'morning', label:'Morning', time:'9:30 – 11:30 AM', minutes:120, optional:false },
+  { id:'afternoon1', label:'Afternoon', time:'2:30 – 5:00 PM', minutes:150, optional:false },
+  { id:'afternoon2', label:'Late Afternoon', time:'5:00 – 8:00 PM', minutes:180, optional:false },
+  { id:'latenight', label:'Late Night', time:'11:30 PM – 1:30 AM', minutes:120, optional:true },
+];
+
+function fmtMins(m){
+  if(m <= 0) return '0m';
+  const h = Math.floor(m/60);
+  const mm = Math.round(m % 60);
+  if(h > 0 && mm > 0) return `${h}h ${mm}m`;
+  if(h > 0) return `${h}h`;
+  return `${mm}m`;
+}
+
+// Greedy schedule generator: fills each work block with the highest-priority
+// projects that still have remaining work, capping at 2h per project per block
+// so the day has variety instead of one project hogging everything.
+function generateSchedule(){
+  const sorted = [...state.projects].sort((a,b)=>(a.priority||9)-(b.priority||9));
+  const remaining = {};
+  sorted.forEach(p=>{
+    if(p.totalEstimate != null){
+      // Fixed-scope project: remaining = estimate minus logged hours
+      remaining[p.id] = Math.max(0, (p.totalEstimate - (p.logged||0)) * 60);
+    } else {
+      // Ongoing/steady-drip project: daily target ~ weekly allocation / 5 working days
+      remaining[p.id] = Math.round(((p.allocHrsPerWeek||0) / 5) * 60);
+    }
+  });
+
+  const MAX_CHUNK = 120; // 2h cap per project per block
+  return WORK_BLOCKS.map(block=>{
+    let left = block.minutes;
+    const assigned = [];
+    for(const p of sorted){
+      if(left <= 0) break;
+      if(remaining[p.id] <= 0) continue;
+      const chunk = Math.min(left, remaining[p.id], MAX_CHUNK);
+      if(chunk <= 0) continue;
+      assigned.push({ project: p, minutes: chunk });
+      remaining[p.id] -= chunk;
+      left -= chunk;
+    }
+    return { block, assigned, leftover: left };
+  });
+}
+
+function renderSchedule(){
+  const wrap = document.getElementById('schedule');
+  wrap.innerHTML = '';
+  const schedule = generateSchedule();
+  schedule.forEach(({block, assigned, leftover})=>{
+    const card = document.createElement('div');
+    card.className = 'sblock' + (block.optional ? ' optional' : '');
+    let inner = `
+      <div class="srow1">
+        <div class="slabel">${block.label}${block.optional ? ' <span class="sopt-tag">if up for it</span>' : ''}</div>
+        <div class="stime">${block.time}</div>
+      </div>
+      <div class="sassigns">`;
+    if(assigned.length === 0){
+      inner += `<div class="sempty">Free / buffer time — nothing urgent left to schedule.</div>`;
+    } else {
+      assigned.forEach(a=>{
+        inner += `
+          <div class="sassign">
+            <div class="sdot" style="background:${a.project.color}"></div>
+            <div>${a.project.name}</div>
+            <div class="shrs">${fmtMins(a.minutes)}</div>
+          </div>`;
+      });
+      if(leftover > 5){
+        inner += `<div class="sempty">+ ${fmtMins(leftover)} free</div>`;
+      }
+    }
+    inner += `</div>`;
+    card.innerHTML = inner;
+    wrap.appendChild(card);
+  });
+}
+
+async function loadCalendarEvents(){
+  const calList = document.getElementById('calList');
+  const Cal = window.Capacitor?.Plugins?.CapacitorCalendar;
+  if(!Cal){
+    calList.innerHTML = `<div class="cempty">Calendar view works inside the installed app on your phone.</div>`;
+    return;
+  }
+  try{
+    const perm = await Cal.requestPermission({ alias: 'readCalendar' });
+    if(perm.result !== 'granted'){
+      calList.innerHTML = `<div class="cempty">Calendar permission not granted — allow it in your phone's app settings to see events here.</div>`;
+      return;
+    }
+    const start = Date.now();
+    const end = start + 4 * 24 * 60 * 60 * 1000; // next 4 days
+    const res = await Cal.listEventsInRange({ startDate: start, endDate: end });
+    const events = (res.result || [])
+      .filter(e => e.startDate)
+      .sort((a,b) => a.startDate - b.startDate)
+      .slice(0, 8);
+
+    if(events.length === 0){
+      calList.innerHTML = `<div class="cempty">Nothing on the calendar for the next few days.</div>`;
+      return;
+    }
+
+    calList.innerHTML = events.map(e=>{
+      const d = new Date(e.startDate);
+      const dateStr = d.toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'short' });
+      const timeStr = e.isAllDay ? '' : d.toLocaleTimeString('en-IN', { hour:'numeric', minute:'2-digit' });
+      const isDeadline = /deadline|due|reminder/i.test(e.title || '');
+      const title = e.title || 'Untitled event';
+      return `
+        <div class="citem">
+          <div class="cdot" style="background:${isDeadline ? '#FF8A5C' : '#9B8CFF'}"></div>
+          <div>
+            <div class="ctitle">${title}</div>
+            <div class="ctime">${dateStr}${timeStr ? ' · ' + timeStr : ''}</div>
+          </div>
+        </div>`;
+    }).join('');
+  }catch(err){
+    calList.innerHTML = `<div class="cempty">Couldn't load calendar: ${err.message || err}</div>`;
+  }
 }
 
 function renderDate(){
@@ -316,6 +645,7 @@ function renderTasks(){
       t.done = !t.done;
       renderTasks();
       renderNudge();
+      renderSchedule();
       await saveState();
     };
     wrap.appendChild(item);
@@ -381,11 +711,13 @@ async function handleSend(){
 
   const systemPrompt = `You are Spud's personal project assistant. Spud is a freelance illustrator and creative director in Bangalore, juggling multiple client and personal projects.
 
-Current projects (note: each has a "priority" field — 1 = top priority right now, 2 = second priority but should stay light/low-effort, 3 = important but not urgent, steady drip pace): ${JSON.stringify(state.projects)}
+Spud's flexible daily work blocks: Morning 9:30-11:30am (2h), Afternoon 2:30-5pm (2.5h), Late Afternoon 5-8pm (3h), and an optional Late Night block 11:30pm-1:30am (2h). Total reliable ~7.5h/day plus an optional 2h.
+
+Current projects (note: each has a "priority" field — 1 = top priority right now (DeEvils 1/1s and Archetype NFT concepts), 2 = second priority but should stay light/low-effort (Odd Cats), 3 = important but not urgent, steady drip pace): ${JSON.stringify(state.projects)}
 Current tasks/reminders: ${JSON.stringify(state.tasks)}
 
 When Spud tells you something, respond in two parts:
-1. A short, direct, casual reply (1-2 sentences max, punchy, no fluff). If relevant, nudge Spud back toward priority 1 (DeEvils 1/1s) and keep priority 2 (Odd Cats) light.
+1. A short, direct, casual reply (1-2 sentences max, punchy, no fluff). If relevant, nudge Spud back toward priority 1 projects and keep priority 2 light.
 2. If the message implies a project update (hours logged, deadline change, status change, allocation change, priority change) or a task update/completion, output JSON update blocks at the END.
 
 Project update format: <update>{"type":"project_update","projectId":"${projectIds}","field":"logged|deadline|status|allocHrsPerWeek|totalEstimate|priority","value":"new value"}</update>
@@ -469,6 +801,7 @@ For "logged" hours, if Spud says they did more work, ADD to the existing logged 
     }
     if(projectsChanged) renderProjects();
     if(tasksChanged) renderTasks();
+    if(projectsChanged || tasksChanged) renderSchedule();
     renderNudge();
     await saveState();
   }catch(err){
@@ -479,58 +812,36 @@ For "logged" hours, if Spud says they did more work, ADD to the existing logged 
   }
 }
 
-document.getElementById('sendBtn').onclick = handleSend;
-document.getElementById('chatInput').addEventListener('keydown', e=>{
+document.getElementById('sendBtn')?.onclick = handleSend;
+document.getElementById('chatInput')?.addEventListener('keydown', e=>{
   if(e.key === 'Enter') handleSend();
 });
 
 // Voice input via Web Speech API
 (function setupMic(){
   const micBtn = document.getElementById('micBtn');
+  if(!micBtn) return;
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-  if(!SpeechRecognition){
-    micBtn.style.display = 'none';
-    return;
-  }
-
+  if(!SpeechRecognition){ micBtn.style.display = 'none'; return; }
   const recognition = new SpeechRecognition();
   recognition.continuous = false;
   recognition.interimResults = false;
   recognition.lang = 'en-IN';
-
   let listening = false;
-
   recognition.onresult = (event) => {
     const transcript = event.results[0][0].transcript;
     const input = document.getElementById('chatInput');
-    input.value = (input.value ? input.value + ' ' : '') + transcript;
+    if(input) input.value = (input.value ? input.value + ' ' : '') + transcript;
   };
-
   recognition.onerror = (event) => {
-    console.error('Speech recognition error', event.error);
     if(event.error === 'not-allowed' || event.error === 'service-not-allowed'){
-      alert('Microphone access was denied. Allow microphone permission for this site to use voice input.');
+      alert('Microphone access denied — allow it in settings.');
     }
   };
-
-  recognition.onend = () => {
-    listening = false;
-    micBtn.classList.remove('listening');
-  };
-
+  recognition.onend = () => { listening = false; micBtn.classList.remove('listening'); };
   micBtn.onclick = () => {
-    if(listening){
-      recognition.stop();
-      return;
-    }
-    try{
-      recognition.start();
-      listening = true;
-      micBtn.classList.add('listening');
-    }catch(e){
-      console.error(e);
-    }
+    if(listening){ recognition.stop(); return; }
+    try{ recognition.start(); listening = true; micBtn.classList.add('listening'); }catch(e){}
   };
 })();
 
@@ -540,7 +851,8 @@ document.getElementById('saveKey').onclick = ()=>{
   localStorage.setItem('spud-os-api-key', key);
   localStorage.setItem('spud-os-provider', provider);
   document.getElementById('apiKey').value = key ? '••••••••' : '';
-  alert('Saved. Try sending a message.');
+  updateChatVisibility();
+  alert(key ? 'Saved — AI assistant is now active.' : 'Key cleared.');
 };
 
 (function loadConfig(){
@@ -551,22 +863,136 @@ document.getElementById('saveKey').onclick = ()=>{
   }
 })();
 
+// ---- Manual Update UI ----
+let selectedHours = 1;
+let selectedPrio = 1;
+let selectedFreq = 'One-off';
+
+function populateProjectSelects(){
+  ['logProject','statusProject'].forEach(id=>{
+    const sel = document.getElementById(id);
+    if(!sel) return;
+    sel.innerHTML = state.projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  });
+}
+
+function renderHourChips(){
+  const wrap = document.getElementById('hourChips');
+  if(!wrap) return;
+  wrap.innerHTML = '';
+  [0.5,1,1.5,2,3,4].forEach(h=>{
+    const btn = document.createElement('button');
+    btn.className = 'hour-chip' + (h===selectedHours?' active':'');
+    btn.textContent = h+'h';
+    btn.onclick = ()=>{
+      selectedHours = h;
+      document.getElementById('customHours').value = '';
+      renderHourChips();
+    };
+    wrap.appendChild(btn);
+  });
+}
+
+function switchTab(tab){
+  ['hours','status','task'].forEach(t=>{
+    const content = document.getElementById('tabContent'+t.charAt(0).toUpperCase()+t.slice(1));
+    const btn = document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1));
+    if(content) content.style.display = t===tab?'block':'none';
+    if(btn) btn.classList.toggle('active', t===tab);
+  });
+  document.getElementById('logFeedback').textContent = '';
+}
+
+function selectPrio(n){
+  selectedPrio = n;
+  [1,2,3].forEach(i=>{
+    document.getElementById('prio'+i)?.classList.toggle('active', i===n);
+  });
+}
+
+function selectFreq(f){
+  selectedFreq = f;
+  document.getElementById('freqOneoff')?.classList.toggle('active', f==='One-off');
+  document.getElementById('freqDaily')?.classList.toggle('active', f==='Every day');
+  document.getElementById('freqAlt')?.classList.toggle('active', f==='Every other day');
+}
+
+function showFeedback(msg){
+  const el = document.getElementById('logFeedback');
+  if(el){ el.textContent = msg; setTimeout(()=>{ el.textContent=''; }, 2500); }
+}
+
+async function logHours(){
+  const projId = document.getElementById('logProject').value;
+  const custom = parseFloat(document.getElementById('customHours').value);
+  const hrs = !isNaN(custom) && custom > 0 ? custom : selectedHours;
+  const proj = state.projects.find(p=>p.id===projId);
+  if(!proj) return;
+  proj.logged = Math.round((proj.logged + hrs) * 10) / 10;
+  renderProjects(); renderSchedule(); renderNudge();
+  await saveState();
+  showFeedback(`✓ +${hrs}h on ${proj.name} — ${proj.logged}h total`);
+}
+
+async function updateStatus(){
+  const projId = document.getElementById('statusProject').value;
+  const deadline = document.getElementById('newDeadline').value.trim();
+  const status = document.getElementById('newStatus').value.trim();
+  const proj = state.projects.find(p=>p.id===projId);
+  if(!proj) return;
+  if(deadline) proj.deadline = deadline;
+  if(status) proj.status = status;
+  proj.priority = selectedPrio;
+  renderProjects(); renderSchedule();
+  await saveState();
+  document.getElementById('newDeadline').value = '';
+  document.getElementById('newStatus').value = '';
+  showFeedback(`✓ ${proj.name} updated`);
+}
+
+async function addTask(){
+  const text = document.getElementById('newTaskText').value.trim();
+  if(!text){ showFeedback('Type a task description first.'); return; }
+  const id = 't' + Date.now();
+  state.tasks.push({ id, text, freq: selectedFreq, done: false });
+  renderTasks(); renderNudge();
+  await saveState();
+  document.getElementById('newTaskText').value = '';
+  showFeedback('✓ Task added');
+}
+
+function updateChatVisibility(){
+  const key = localStorage.getItem('spud-os-api-key');
+  const wrap = document.getElementById('chatWrap');
+  if(wrap) wrap.style.display = key ? 'block' : 'none';
+}
+
 (async function init(){
   await loadState();
   renderDate();
   renderProjects();
   renderTasks();
+  renderSchedule();
   renderWeek();
   renderNudge();
   renderMessages();
+  populateProjectSelects();
+  renderHourChips();
+  updateChatVisibility();
   await saveState();
 
-  // Register service worker for offline/PWA support
-  if('serviceWorker' in navigator){
-    try{ await navigator.serviceWorker.register('sw.js'); }catch(e){ console.log('SW failed', e); }
+  // Register service worker for offline/PWA support (web fallback only)
+  if('serviceWorker' in navigator && !window.Capacitor){
+    try{ await navigator.serviceWorker.register('sw.js'); }catch(e){ console.log('SW not available — skipping (fine for native app)'); }
   }
 
-  // Ask for notification permission (works while app is open/installed)
+  // Native app: schedule real local notifications via Capacitor
+  await scheduleLocalNotifications();
+
+  // Native app: load live calendar events
+  await loadCalendarEvents();
+
+  // Web fallback: ask for browser notification permission
   if('Notification' in window){
     if(Notification.permission === 'default'){
       await Notification.requestPermission();
@@ -580,6 +1006,92 @@ document.getElementById('saveKey').onclick = ()=>{
     }
   }
 })();
+
+// ---- Capacitor Local Notifications ----
+async function scheduleLocalNotifications(){
+  const LN = window.Capacitor?.Plugins?.LocalNotifications;
+  if(!LN) return; // Not running inside the native app — skip
+
+  try{
+    const perm = await LN.requestPermissions();
+    if(perm.display !== 'granted') return;
+
+    // Cancel previously scheduled ones to avoid duplicates on re-launch
+    const pending = await LN.getPending();
+    if(pending.notifications.length){
+      await LN.cancel({ notifications: pending.notifications.map(n => ({ id: n.id })) });
+    }
+
+    const notifications = [];
+    let id = 1;
+
+    // Daily check-in reminder at 9am
+    notifications.push({
+      id: id++,
+      title: 'Project OS',
+      body: 'Morning check-in: open the app and see what needs attention today.',
+      schedule: { on: { hour: 9, minute: 0 }, every: 'day' },
+    });
+
+    // Per-project deadline reminders (1 day before, if deadline looks like a date)
+    const monthMap = { Jan:0, Feb:1, Mar:2, Apr:3, May:4, Jun:5, Jul:6, Aug:7, Sep:8, Oct:9, Nov:10, Dec:11 };
+    state.projects.forEach(p=>{
+      const m = p.deadline.match(/^([A-Za-z]{3})\s+(\d{1,2})$/);
+      if(m && monthMap[m[1]] !== undefined){
+        const now = new Date();
+        let year = now.getFullYear();
+        let date = new Date(year, monthMap[m[1]], parseInt(m[2]), 9, 0, 0);
+        if(date < now) date.setFullYear(year + 1);
+        const dayBefore = new Date(date.getTime() - 24*60*60*1000);
+        if(dayBefore > now){
+          notifications.push({
+            id: id++,
+            title: 'Deadline tomorrow',
+            body: `${p.name} is due tomorrow (${p.deadline}).`,
+            schedule: { at: dayBefore },
+          });
+        }
+        if(date > now){
+          notifications.push({
+            id: id++,
+            title: 'Deadline today',
+            body: `${p.name} is due today.`,
+            schedule: { at: date },
+          });
+        }
+      }
+    });
+
+    // Recurring task reminders
+    state.tasks.forEach(t=>{
+      if(t.done) return;
+      if(t.freq === 'Every other day'){
+        notifications.push({
+          id: id++,
+          title: 'Project OS reminder',
+          body: t.text,
+          schedule: { on: { hour: 18, minute: 0 }, every: 'day' }, // daily at 6pm; check it off once done
+        });
+      } else if(t.freq === 'One-off'){
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(9, 0, 0, 0);
+        notifications.push({
+          id: id++,
+          title: 'Project OS reminder',
+          body: t.text,
+          schedule: { at: tomorrow },
+        });
+      }
+    });
+
+    if(notifications.length){
+      await LN.schedule({ notifications });
+    }
+  }catch(e){
+    console.error('Local notification scheduling failed', e);
+  }
+}
 </script>
 </body>
 </html>
