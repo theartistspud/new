@@ -8,6 +8,7 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Spud — Project OS</title>
+<script src="firebase-bundle.js"></script>
 <style>
   :root{
     --bg:#16151A;
@@ -197,7 +198,7 @@
       </div>
       <div style="text-align:right;">
         <div class="date" id="dateDisplay"></div>
-        <div id="syncStatus" style="font-size:11px; margin-top:4px;">local only</div>
+        <div id="syncStatus" style="font-size:11px; margin-top:4px;">connecting…</div>
       </div>
     </div>
 
@@ -219,7 +220,7 @@
     <div class="week" id="week"></div>
 
     <div class="label">Calendar — next few days</div>
-    <div class="cal-list" id="calList"><div class="cempty">Calendar integration requires the native app (Capacitor). Works great in browser with local data.</div></div>
+    <div class="cal-list" id="calList"><div class="cempty">Open this in the installed app on your phone to see your live calendar events here.</div></div>
 
     <div class="label">Update a project</div>
     <div class="panel" id="logPanel" style="display:flex; flex-direction:column; gap:12px;">
@@ -309,8 +310,7 @@
 
   <div class="label">Assistant (optional)</div>
   <div class="panel" style="font-size:13px; color:var(--text-dim); line-height:1.6;">
-    Add an API key to enable the AI chat assistant (works with Claude or Gemini). 
-    <strong>Note:</strong> For production, use a backend proxy — direct browser API calls expose your key.
+    Add an API key to enable the AI chat assistant — it can understand natural language updates and give advice. Works with Claude (Anthropic) or Gemini (Google).
     <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
       <select id="provider" style="background:var(--panel-2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:13px;">
         <option value="anthropic">Anthropic (Claude)</option>
@@ -337,6 +337,18 @@
   </div>
 
 <script>
+// ==================== CONFIG ====================
+const firebaseConfig = {
+  apiKey: "AIzaSyA_rrT9szMGXHlY43Vdy7TZys6UPL6dn_E",
+  authDomain: "spud-project-os.firebaseapp.com",
+  projectId: "spud-project-os",
+  storageBucket: "spud-project-os.firebasestorage.app",
+  messagingSenderId: "998800303898",
+  appId: "1:998800303898:web:80a30537c64610de326ea3"
+};
+
+const STORAGE_KEY = 'spud-os-state-v3';
+
 // ==================== SAFE UTILITIES ====================
 const $ = (id) => document.getElementById(id);
 const safeGet = (id) => $(id) || null;
@@ -347,7 +359,6 @@ function showFeedback(msg) {
     el.textContent = msg;
     setTimeout(() => { if (el) el.textContent = ''; }, 2800);
   }
-  console.log('[Spud OS]', msg);
 }
 
 function setSyncStatus(msg, color = 'var(--text-faint)') {
@@ -359,7 +370,10 @@ function setSyncStatus(msg, color = 'var(--text-faint)') {
 }
 
 // ==================== STATE ====================
-const STORAGE_KEY = 'spud-os-state-v2'; // bumped version for safety
+let state = null;
+let db = null;
+let unsubscribe = null;
+let isFirebaseReady = false;
 
 const DEFAULT_STATE = {
   projects: [
@@ -376,55 +390,124 @@ const DEFAULT_STATE = {
     { id:"t2", text:"Re-export & rename all CETS PNGs", freq:"One-off", done:false },
     { id:"t3", text:"Make small portfolio progress (add/update one piece)", freq:"Every other day", done:false },
   ],
-  schedule: [],
   captures: [],
   messages: [
-    { role:"assistant", text:"Hey Spud — Spud OS is ready. All data stays in your browser (local only in this build). Add an API key below for AI features." }
+    { role:"assistant", text:"Hey Spud — Spud OS is live with real-time sync across devices. All changes will appear on your other devices automatically." }
   ],
   blockedSlots: []
 };
 
-let state = null;
+async function initFirebase() {
+  try {
+    if (!window.FirebaseApp || !window.FirebaseFirestore) {
+      throw new Error("Firebase bundle not loaded correctly");
+    }
 
-function loadState() {
+    const { initializeApp } = window.FirebaseApp;
+    const { getFirestore, doc, getDoc, setDoc, onSnapshot } = window.FirebaseFirestore;
+
+    const app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+
+    // Test connection
+    const testRef = doc(db, 'users/spud');
+    await getDoc(testRef);
+
+    isFirebaseReady = true;
+    setSyncStatus('✓ Synced', 'var(--biz)');
+    return { doc, getDoc, setDoc, onSnapshot };
+  } catch (e) {
+    console.warn("Firebase initialization failed:", e);
+    isFirebaseReady = false;
+    setSyncStatus('⚠ Offline mode', '#FFC857');
+    return null;
+  }
+}
+
+async function loadState() {
+  // Load from localStorage first (fast)
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      state = JSON.parse(raw);
+    if (raw) state = JSON.parse(raw);
+  } catch (e) {}
+
+  // Try Firebase
+  const fns = await initFirebase();
+
+  if (fns && db) {
+    const { doc, getDoc, onSnapshot } = fns;
+    const ref = doc(db, 'users/spud');
+
+    try {
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        const remoteState = snap.data();
+        // Merge strategy: remote wins on conflicts for simplicity
+        state = { ...DEFAULT_STATE, ...remoteState };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        setSyncStatus('✓ Synced from cloud', 'var(--biz)');
+      } else {
+        if (!state) state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+        await saveStateToFirebase();
+      }
+    } catch (e) {
+      console.warn("Failed to load from Firebase, using local", e);
     }
-  } catch (e) {
-    console.warn('Failed to load from localStorage', e);
+
+    // Real-time listener
+    if (unsubscribe) unsubscribe();
+    unsubscribe = onSnapshot(ref, (snap) => {
+      if (snap.exists()) {
+        const incoming = snap.data();
+        if (JSON.stringify(incoming) !== JSON.stringify(state)) {
+          state = incoming;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          renderAllViews();
+          setSyncStatus('↓ Updated from another device', 'var(--own)');
+          setTimeout(() => setSyncStatus('✓ Synced', 'var(--biz)'), 2000);
+        }
+      }
+    });
   }
 
-  if (!state) {
-    state = JSON.parse(JSON.stringify(DEFAULT_STATE));
-  }
+  if (!state) state = JSON.parse(JSON.stringify(DEFAULT_STATE));
 
-  // Ensure critical arrays exist
+  // Ensure required arrays
   if (!state.projects) state.projects = [];
   if (!state.tasks) state.tasks = [];
   if (!state.captures) state.captures = [];
   if (!state.messages) state.messages = [];
   if (!state.blockedSlots) state.blockedSlots = [];
 
-  // Merge any missing default projects (safety)
+  // Merge missing default projects
   DEFAULT_STATE.projects.forEach(defaultProj => {
     if (!state.projects.find(p => p.id === defaultProj.id)) {
       state.projects.push(JSON.parse(JSON.stringify(defaultProj)));
     }
   });
-
-  setSyncStatus('local only', 'var(--text-faint)');
 }
 
-function saveState() {
+async function saveState() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    setSyncStatus('✓ saved locally', 'var(--biz)');
-    setTimeout(() => setSyncStatus('local only', 'var(--text-faint)'), 1200);
+  } catch (e) {}
+
+  if (isFirebaseReady && db) {
+    await saveStateToFirebase();
+  }
+}
+
+async function saveStateToFirebase() {
+  if (!db) return;
+  try {
+    const { doc, setDoc } = window.FirebaseFirestore;
+    const ref = doc(db, 'users/spud');
+    await setDoc(ref, state);
+    setSyncStatus('✓ Saved to cloud', 'var(--biz)');
+    setTimeout(() => setSyncStatus('✓ Synced', 'var(--biz)'), 1500);
   } catch (e) {
-    console.error('Failed to save state', e);
-    setSyncStatus('⚠ save failed', '#FFC857');
+    console.warn("Failed to save to Firebase", e);
+    setSyncStatus('⚠ Saved locally only', '#FFC857');
   }
 }
 
@@ -470,7 +553,6 @@ function generateWeeklySchedule() {
     weeklyMinsNeeded[p.id] = (p.allocHrsPerWeek || 0) * 60;
   });
 
-  // Fixed recurring projects
   state.projects.filter(p => p.fixed).forEach(p => {
     (p.weeklySlots || []).forEach(slot => {
       const day = slot.replace(/ eve$/, '').trim();
@@ -543,7 +625,6 @@ function renderSchedule() {
 
   const now = new Date();
   const todayIdx = (now.getDay() + 6) % 7;
-  const todayName = DAYS[todayIdx];
   const currentHour = now.getHours() + now.getMinutes() / 60;
   const schedule = generateWeeklySchedule();
   const blocked = state.blockedSlots || [];
@@ -618,10 +699,6 @@ function renderSchedule() {
     dayCard.innerHTML = html;
     wrap.appendChild(dayCard);
   });
-
-  if (wrap.innerHTML === '') {
-    wrap.innerHTML = '<div style="font-size:13px;color:var(--text-faint);padding:10px 0">No active projects — add one below to generate a schedule.</div>';
-  }
 }
 
 function openBlockOut(day) {
@@ -663,7 +740,7 @@ async function saveBlockOut(day) {
   if (modal) modal.remove();
   renderSchedule();
   renderWeek();
-  saveState();
+  await saveState();
   showFeedback(`✓ ${day} blocks updated`);
 }
 
@@ -672,7 +749,7 @@ async function removeBlock(day, blockId) {
   state.blockedSlots = state.blockedSlots.filter(b => !(b.day === day && b.blockId === blockId));
   renderSchedule();
   renderWeek();
-  saveState();
+  await saveState();
 }
 
 function renderDate() {
@@ -766,7 +843,7 @@ function renderTasks() {
       renderNudge();
       renderSchedule();
       renderArchive();
-      saveState();
+      await saveState();
     };
     wrap.appendChild(item);
   });
@@ -828,7 +905,7 @@ async function restoreProject(id) {
   p.progress = 75;
   p.status = 'Nearly done';
   renderAllViews();
-  saveState();
+  await saveState();
 }
 
 async function restoreTask(id) {
@@ -836,7 +913,7 @@ async function restoreTask(id) {
   if (!t) return;
   t.done = false;
   renderAllViews();
-  saveState();
+  await saveState();
 }
 
 function renderWeek() {
@@ -914,7 +991,7 @@ function renderAllViews() {
   renderArchive();
 }
 
-// ==================== CAPTURES / INGESTION ====================
+// ==================== CAPTURES ====================
 async function processCaptureUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -934,9 +1011,8 @@ async function processCaptureUpload(event) {
 
     state.captures.unshift(newCap);
     renderCapturesLayout();
-    saveState();
+    await saveState();
 
-    // Try AI analysis (best effort)
     analyzeScreenshotContextWithAI(newCap.id, dataUrl);
   };
   reader.readAsDataURL(file);
@@ -1057,7 +1133,7 @@ async function commitConfirmedCapture(id) {
   }
 
   renderAllViews();
-  saveState();
+  await saveState();
   showFeedback('✓ Saved to vault');
 }
 
@@ -1153,7 +1229,7 @@ async function triggerAIConceptIncubation(id) {
     showFeedback('AI incubation failed. Check your API key and network.');
   } finally {
     renderAllViews();
-    saveState();
+    await saveState();
     if (btn) {
       btn.textContent = "⚡ Incubate";
       btn.disabled = false;
@@ -1194,10 +1270,9 @@ async function analyzeScreenshotContextWithAI(captureId, base64Image) {
         targetCap.type = data.type || targetCap.type;
         if (data.deadline) targetCap.deadline = data.deadline;
         renderCapturesLayout();
-        saveState();
+        await saveState();
       }
     }
-    // Anthropic vision would require different handling (base64 in content array)
   } catch (err) {
     console.warn("Vision analysis failed (non-critical):", err);
   }
@@ -1225,7 +1300,6 @@ function populateProjectSelects() {
     selectPrio(proj.priority || 3);
   };
 
-  // Trigger initial load
   if (sel.options.length > 0) {
     sel.dispatchEvent(new Event('change'));
   }
@@ -1298,7 +1372,7 @@ async function updateStatus() {
   renderProjects();
   renderSchedule();
   renderWeek();
-  saveState();
+  await saveState();
   showFeedback(`✓ ${proj.name} updated`);
 }
 
@@ -1336,9 +1410,8 @@ async function addProject() {
   });
 
   renderAllViews();
-  saveState();
+  await saveState();
 
-  // Clear form
   if (safeGet('addName')) safeGet('addName').value = '';
   if (safeGet('addGoal')) safeGet('addGoal').value = '';
   if (safeGet('addDeadline')) safeGet('addDeadline').value = '';
@@ -1359,7 +1432,7 @@ async function addTask() {
 
   renderTasks();
   renderNudge();
-  saveState();
+  await saveState();
 
   if (safeGet('newTaskText')) safeGet('newTaskText').value = '';
   showFeedback('✓ Task added');
@@ -1410,7 +1483,7 @@ async function handleSend() {
 
   input.value = '';
   addMessage('user', text);
-  saveState();
+  await saveState();
 
   const sendBtn = safeGet('sendBtn');
   if (sendBtn) sendBtn.disabled = true;
@@ -1434,7 +1507,7 @@ async function handleSend() {
     return;
   }
 
-  const systemPrompt = `You are Spud's helpful project assistant. Current projects: ${JSON.stringify(state.projects.map(p => ({id: p.id, name: p.name, progress: p.progress, priority: p.priority})))}. Tasks: ${JSON.stringify(state.tasks.map(t => ({id: t.id, text: t.text, done: t.done})))}. If the user wants to update something, reply normally and also include an <update> JSON block if needed.`;
+  const systemPrompt = `You are Spud's helpful project assistant. Current projects: ${JSON.stringify(state.projects.map(p => ({id: p.id, name: p.name, progress: p.progress, priority: p.priority})))}. Tasks: ${JSON.stringify(state.tasks.map(t => ({id: t.id, text: t.text, done: t.done})))}. If the user wants to update something, reply normally.`;
 
   try {
     let fullText = '';
@@ -1467,27 +1540,12 @@ async function handleSend() {
     }
 
     if (loadingDiv) loadingDiv.remove();
-    addMessage('assistant', fullText || "Got it. Changes applied where possible.");
-
-    // Simple update parsing (optional)
-    const updateMatch = fullText.match(/<update>([\s\S]*?)<\/update>/);
-    if (updateMatch) {
-      try {
-        const upd = JSON.parse(updateMatch[1]);
-        if (upd.type === 'project_update') {
-          const proj = state.projects.find(p => p.id === upd.projectId);
-          if (proj && upd.field) {
-            proj[upd.field] = upd.value;
-            renderAllViews();
-          }
-        }
-      } catch (e) {}
-    }
+    addMessage('assistant', fullText || "Got it.");
 
     saveState();
   } catch (err) {
     if (loadingDiv) loadingDiv.remove();
-    addMessage('assistant', "Sorry, there was an error contacting the AI. Check your API key.");
+    addMessage('assistant', "Sorry, there was an error contacting the AI.");
     console.error(err);
   } finally {
     if (sendBtn) sendBtn.disabled = false;
@@ -1511,7 +1569,6 @@ function setupChat() {
     });
   }
 
-  // Mic
   const micBtn = safeGet('micBtn');
   if (micBtn) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1569,7 +1626,6 @@ function setupConfig() {
     };
   }
 
-  // Load saved config
   const savedProvider = localStorage.getItem('spud-os-provider') || 'anthropic';
   const providerEl = safeGet('provider');
   if (providerEl) providerEl.value = savedProvider;
@@ -1579,7 +1635,7 @@ function setupConfig() {
   if (keyEl && savedKey) keyEl.value = '••••••••';
 }
 
-// ==================== MAIN INIT ====================
+// ==================== MAIN ====================
 function switchMainView(targetView) {
   const dash = safeGet('viewDashboard');
   const caps = safeGet('viewCaptures');
@@ -1603,7 +1659,7 @@ function toggleArchive() {
 }
 
 async function init() {
-  loadState();
+  await loadState();
 
   renderDate();
   renderAllViews();
@@ -1612,16 +1668,13 @@ async function init() {
   setupChat();
   setupConfig();
 
-  // Initial tab
   switchTab('status');
 
-  // Final save to ensure everything is persisted
-  saveState();
+  await saveState();
 
-  console.log('%c[Spud OS] Initialized successfully (local mode)', 'color:#4ABDAC');
+  console.log('%c[Spud OS] Initialized with Firebase sync', 'color:#4ABDAC');
 }
 
-// Boot
 init();
 </script>
 </body>
