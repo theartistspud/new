@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net https://firestore.googleapis.com https://api.anthropic.com https://generativelanguage.googleapis.com; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline';">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#16151A">
 <link rel="icon" href="icon-192.png">
@@ -391,6 +392,9 @@
 
   </div><!-- end captures tab -->
 
+</div><!-- end app wrapper -->
+
+<script>
 // ---- App tab switching ----
 function switchAppTab(tab){
   document.getElementById('tabDashboard').classList.toggle('active', tab==='dashboard');
@@ -656,6 +660,8 @@ async function handleCaptureFromShare(imageData){
   await saveState();
   renderCaptures();
 }
+
+function toggleArchive(){
   const list = document.getElementById('archiveList');
   const btn = document.getElementById('archiveToggle');
   const open = list.style.display !== 'none';
