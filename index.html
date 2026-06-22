@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net https://firestore.googleapis.com https://api.anthropic.com https://generativelanguage.googleapis.com; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline';">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#16151A">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Spud — Project OS</title>
-<script src="firebase-bundle.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
   :root{
     --bg:#16151A;
@@ -670,7 +670,7 @@ function toggleArchive(){
 }
 
 const STORAGE_KEY = 'spud-os-state-v1';
-const FIREBASE_DOC = 'users/spud'; // single doc for all state
+const FIREBASE_DOC = 'users/spud'; // kept for reference
 
 // ---- Firebase setup ----
 const firebaseConfig = {
@@ -687,12 +687,26 @@ let unsubscribe = null;
 
 async function initFirebase(){
   try{
-    // Use globally loaded Firebase from script tags
-    const { initializeApp } = window.FirebaseApp;
-    const { getFirestore, doc, getDoc, setDoc, onSnapshot } = window.FirebaseFirestore;
-    const app = initializeApp(firebaseConfig);
-    db = getFirestore(app);
-    return { doc, getDoc, setDoc, onSnapshot };
+    if(!window.firebase) throw new Error('Firebase not loaded');
+    window.firebase.initializeApp(firebaseConfig);
+    db = window.firebase.firestore();
+    // Wrap compat API to match our usage
+    const firestoreRef = (path) => {
+      const parts = path.split('/');
+      return db.collection(parts[0]).doc(parts[1]);
+    };
+    return {
+      doc: (dbRef, path) => {
+        const parts = path.split('/');
+        return dbRef.collection(parts[0]).doc(parts[1]);
+      },
+      getDoc: async (ref) => {
+        const snap = await ref.get();
+        return { exists: () => snap.exists, data: () => snap.data() };
+      },
+      setDoc: async (ref, data) => { await ref.set(data); },
+      onSnapshot: null,
+    };
   }catch(e){
     console.error('Firebase init failed', e);
     return null;
@@ -721,7 +735,8 @@ const DEFAULT_STATE = {
 };
 
 let state = null;
-let _firestoreFns = null;
+let db = null;
+let unsubscribe = null;
 
 // Show sync status in UI
 function setSyncStatus(msg, color='var(--text-faint)'){
@@ -738,53 +753,47 @@ async function loadState(){
     if(raw) state = JSON.parse(raw);
   }catch(e){}
 
-  // Then try Firebase
+  // Then try Firebase compat
   try{
-    if(!_firestoreFns) _firestoreFns = await initFirebase();
-    if(_firestoreFns && db){
-      const { doc, getDoc, onSnapshot } = _firestoreFns;
-      const ref = doc(db, FIREBASE_DOC);
-      const snap = await getDoc(ref);
-      if(snap.exists()){
+    await initFirebase();
+    if(db){
+      const ref = db.collection('users').doc('spud');
+      const snap = await ref.get();
+      if(snap.exists){
         state = snap.data();
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         setSyncStatus('✓ Synced', 'var(--biz)');
       } else {
-        // First time — push defaults to Firebase
         if(!state) state = JSON.parse(JSON.stringify(DEFAULT_STATE));
-        const { setDoc } = _firestoreFns;
-        await setDoc(ref, state);
+        await ref.set(state);
         setSyncStatus('✓ Synced', 'var(--biz)');
       }
-      // Listen for real-time updates from other devices
-      if(unsubscribe) unsubscribe();
-      unsubscribe = onSnapshot(ref, (snap)=>{
-        if(snap.exists()){
-          const incoming = snap.data();
-          // Only update if it's genuinely different (avoid re-render loops)
-          if(JSON.stringify(incoming) !== JSON.stringify(state)){
-            state = incoming;
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-            renderProjects();
-            renderTasks();
-            renderSchedule();
-            renderWeek();
-            renderNudge();
-            populateProjectSelects();
-            setSyncStatus('↓ Updated from another device', 'var(--own)');
-            setTimeout(()=>setSyncStatus('✓ Synced', 'var(--biz)'), 3000);
+      // Poll every 30s for updates from other devices
+      if(unsubscribe) clearInterval(unsubscribe);
+      unsubscribe = setInterval(async ()=>{
+        try{
+          const pollSnap = await db.collection('users').doc('spud').get();
+          if(pollSnap.exists){
+            const incoming = pollSnap.data();
+            if(JSON.stringify(incoming) !== JSON.stringify(state)){
+              state = incoming;
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+              renderProjects(); renderTasks(); renderSchedule();
+              renderWeek(); renderNudge(); populateProjectSelects();
+              setSyncStatus('↓ Updated from another device', 'var(--own)');
+              setTimeout(()=>setSyncStatus('✓ Synced', 'var(--biz)'), 3000);
+            }
           }
-        }
-      });
+        }catch(e){}
+      }, 30000);
     }
   }catch(e){
     setSyncStatus('⚠ Offline — changes saved locally', '#FFC857');
-    console.warn('Firebase unavailable, using localStorage', e);
+    console.warn('Firebase unavailable:', e);
   }
 
   if(!state) state = JSON.parse(JSON.stringify(DEFAULT_STATE));
 
-  // Migration: add new default projects missing from saved state
   DEFAULT_STATE.projects.forEach(defaultProj=>{
     if(!state.projects.find(p=>p.id===defaultProj.id)){
       state.projects.push(JSON.parse(JSON.stringify(defaultProj)));
@@ -793,17 +802,12 @@ async function loadState(){
 }
 
 async function saveState(){
-  // Save to localStorage instantly
-  try{
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }catch(e){}
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
 
-  // Push to Firebase
   try{
-    if(!_firestoreFns) _firestoreFns = await initFirebase();
-    if(_firestoreFns && db){
-      const { doc, setDoc } = _firestoreFns;
-      await setDoc(doc(db, FIREBASE_DOC), state);
+    if(!db) await initFirebase();
+    if(db){
+      await db.collection('users').doc('spud').set(state);
       setSyncStatus('✓ Synced', 'var(--biz)');
     }
   }catch(e){
@@ -1720,52 +1724,41 @@ function updateChatVisibility(){
 }
 
 (async function init(){
-  try {
-    await loadState();
-    renderDate();
-    renderProjects();
-    renderTasks();
-    renderSchedule();
-    renderWeek();
-    renderNudge();
-    renderMessages();
-    populateProjectSelects();
-    updateChatVisibility();
-    renderArchive();
-    await saveState();
+  await loadState();
+  renderDate();
+  renderProjects();
+  renderTasks();
+  renderSchedule();
+  renderWeek();
+  renderNudge();
+  renderMessages();
+  populateProjectSelects();
+  updateChatVisibility();
+  renderArchive();
+  await saveState();
 
-    // Register service worker for offline/PWA support (web fallback only)
-    if('serviceWorker' in navigator && !window.Capacitor){
-      try{ await navigator.serviceWorker.register('sw.js'); }catch(e){ console.log('SW not available — skipping (fine for native app)'); }
+  // Register service worker for offline/PWA support (web fallback only)
+  if('serviceWorker' in navigator && !window.Capacitor){
+    try{ await navigator.serviceWorker.register('sw.js'); }catch(e){ console.log('SW not available — skipping (fine for native app)'); }
+  }
+
+  // Native app: schedule real local notifications via Capacitor
+  await scheduleLocalNotifications();
+
+  // Native app: load live calendar events
+  await loadCalendarEvents();
+
+  // Web fallback: ask for browser notification permission
+  if('Notification' in window){
+    if(Notification.permission === 'default'){
+      await Notification.requestPermission();
     }
-
-    // Native app: schedule real local notifications via Capacitor
-    await scheduleLocalNotifications();
-
-    // Native app: load live calendar events
-    await loadCalendarEvents();
-
-    // Web fallback: ask for browser notification permission
-    if('Notification' in window){
-      if(Notification.permission === 'default'){
-        await Notification.requestPermission();
+    if(Notification.permission === 'granted'){
+      const nudgeText = document.getElementById('nudgeText').textContent;
+      const nudgeVisible = document.getElementById('nudgeBar').style.display !== 'none';
+      if(nudgeVisible && nudgeText){
+        new Notification('Project OS', { body: nudgeText, icon: 'icon-192.png' });
       }
-      if(Notification.permission === 'granted'){
-        const nudgeText = document.getElementById('nudgeText').textContent;
-        const nudgeVisible = document.getElementById('nudgeBar').style.display !== 'none';
-        if(nudgeVisible && nudgeText){
-          new Notification('Project OS', { body: nudgeText, icon: 'icon-192.png' });
-        }
-      }
-    }
-  } catch (err) {
-    console.error('Spud OS failed to initialize:', err);
-    const body = document.body;
-    if (body) {
-      const errDiv = document.createElement('div');
-      errDiv.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#E24B4A;color:white;padding:12px 16px;font-size:13px;z-index:9999;';
-      errDiv.innerHTML = `⚠️ App failed to start. Check browser Console (F12) for details.<br><small>${err.message || err}</small>`;
-      body.appendChild(errDiv);
     }
   }
 })();
