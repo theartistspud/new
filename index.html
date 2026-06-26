@@ -266,6 +266,94 @@
   }
   .inbox-btn-ai:hover{ background:rgba(155,140,255,0.1); }
   .inbox-btn-ai:disabled{ opacity:0.5; cursor:default; }
+  .inbox-btn-incubate{
+    width:100%; padding:10px; border:1px solid var(--client);
+    border-radius:10px; background:transparent;
+    color:var(--client); font-size:13px; font-weight:700;
+    cursor:pointer; display:flex; align-items:center;
+    justify-content:center; gap:8px; transition:all .15s;
+  }
+  .inbox-btn-incubate:hover{ background:rgba(255,138,92,0.1); }
+  .incubate-spawned{
+    background:rgba(155,140,255,0.08); border:1px solid rgba(155,140,255,0.3);
+    border-radius:10px; padding:10px 12px; font-size:12px;
+    color:var(--own); font-weight:600;
+  }
+
+  /* ---- Vault masonry modal ---- */
+  .vault-modal{
+    position:fixed; inset:0; background:rgba(0,0,0,0.85);
+    z-index:200; display:flex; flex-direction:column;
+    overflow:hidden;
+  }
+  .vault-modal-header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 18px; background:var(--panel);
+    border-bottom:1px solid var(--line); flex-shrink:0;
+  }
+  .vault-modal-title{ font-size:16px; font-weight:700; color:var(--text); }
+  .vault-modal-count{ font-size:12px; color:var(--text-faint); margin-top:2px; }
+  .vault-modal-close{
+    width:36px; height:36px; border:none; border-radius:50%;
+    background:var(--panel-2); color:var(--text);
+    font-size:18px; cursor:pointer; display:flex;
+    align-items:center; justify-content:center;
+  }
+  .vault-modal-body{
+    flex:1; overflow-y:auto; padding:14px;
+  }
+  .masonry-grid{
+    columns:2; column-gap:10px;
+  }
+  .masonry-item{
+    break-inside:avoid; margin-bottom:10px;
+    background:var(--panel); border:1px solid var(--line);
+    border-radius:12px; overflow:hidden; cursor:pointer;
+    transition:transform .15s, border-color .15s;
+  }
+  .masonry-item:active{ transform:scale(0.98); }
+  .masonry-item:hover{ border-color:var(--text-faint); }
+  .masonry-img{ width:100%; display:block; object-fit:cover; }
+  .masonry-caption{ padding:8px 10px; }
+  .masonry-title{ font-size:12px; font-weight:600; color:var(--text); margin-bottom:2px; }
+  .masonry-meta{ font-size:10px; color:var(--text-faint); }
+  .masonry-type-badge{
+    display:inline-block; font-size:10px; font-weight:700;
+    padding:2px 7px; border-radius:20px; margin-bottom:5px;
+  }
+  .masonry-empty{
+    text-align:center; padding:60px 20px;
+    color:var(--text-faint); font-size:14px;
+  }
+
+  /* ---- Capture detail modal ---- */
+  .capture-detail-modal{
+    position:fixed; inset:0; background:rgba(0,0,0,0.92);
+    z-index:300; display:flex; flex-direction:column;
+    overflow:hidden;
+  }
+  .capture-detail-header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 16px; flex-shrink:0;
+  }
+  .capture-detail-img{
+    flex:1; overflow-y:auto; display:flex;
+    flex-direction:column; align-items:center; padding:0 14px 14px;
+  }
+  .capture-detail-img img{ width:100%; border-radius:12px; display:block; margin-bottom:14px; }
+  .capture-detail-info{
+    width:100%; background:var(--panel); border-radius:12px; padding:14px;
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .capture-detail-title{ font-size:15px; font-weight:700; color:var(--text); }
+  .capture-detail-row{ font-size:13px; color:var(--text-dim); display:flex; gap:8px; }
+  .capture-detail-label{ color:var(--text-faint); flex-shrink:0; }
+  .capture-delete-btn{
+    width:100%; padding:11px; border:1px solid #E24B4A;
+    border-radius:10px; background:transparent;
+    color:#E24B4A; font-size:13px; font-weight:700; cursor:pointer;
+    margin-top:4px;
+  }
   .ai-suggestion-banner{
     background:rgba(155,140,255,0.08);
     border:1px solid rgba(155,140,255,0.25);
@@ -583,9 +671,100 @@ function renderVaultFolders(){
 }
 
 function openVault(projectId){
-  // Placeholder for Session 5 — masonry grid view
-  const p = projectId === 'general' ? { name:'General Vault' } : state.projects.find(pr=>pr.id===projectId);
-  alert(`${p?.name || 'Vault'} — full masonry view coming in Session 5!`);
+  const captures = (state.captures||[]).filter(c=>c.confirmed);
+  const items = projectId === 'general'
+    ? captures.filter(c=>!c.projectId || c.projectId==='general')
+    : captures.filter(c=>c.projectId===projectId);
+
+  const proj = projectId === 'general'
+    ? { name:'General Vault' }
+    : state.projects.find(p=>p.id===projectId);
+
+  const typeColors = {
+    inspiration:{ bg:'rgba(155,140,255,0.2)', color:'#9B8CFF', label:'✨ Inspiration' },
+    reference:{ bg:'rgba(74,189,172,0.2)', color:'#4ABDAC', label:'🖼 Reference' },
+    opportunity:{ bg:'rgba(255,138,92,0.2)', color:'#FF8A5C', label:'💼 Opportunity' },
+    misc:{ bg:'rgba(155,155,155,0.2)', color:'#9C99A8', label:'📌 Misc' },
+  };
+
+  const modal = document.createElement('div');
+  modal.className = 'vault-modal';
+  modal.id = 'vaultModal';
+
+  const itemsHTML = items.length === 0
+    ? `<div class="masonry-empty">No captures here yet — confirm items from the inbox to add them.</div>`
+    : `<div class="masonry-grid">
+        ${items.map(cap=>{
+          const tc = typeColors[cap.type] || typeColors.misc;
+          return `<div class="masonry-item" onclick="openCaptureDetail('${cap.id}')">
+            <img class="masonry-img" src="${cap.imageData}" alt="${cap.title||'Capture'}" loading="lazy">
+            <div class="masonry-caption">
+              <div class="masonry-type-badge" style="background:${tc.bg};color:${tc.color}">${tc.label}</div>
+              <div class="masonry-title">${cap.title||'Untitled'}</div>
+              <div class="masonry-meta">${new Date(cap.confirmedAt||cap.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+
+  modal.innerHTML = `
+    <div class="vault-modal-header">
+      <div>
+        <div class="vault-modal-title">${proj?.name||'Vault'}</div>
+        <div class="vault-modal-count">${items.length} item${items.length!==1?'s':''}</div>
+      </div>
+      <button class="vault-modal-close" onclick="document.getElementById('vaultModal').remove()">✕</button>
+    </div>
+    <div class="vault-modal-body">${itemsHTML}</div>`;
+
+  document.body.appendChild(modal);
+}
+
+function openCaptureDetail(id){
+  const cap = (state.captures||[]).find(c=>c.id===id);
+  if(!cap) return;
+
+  const typeLabels = { inspiration:'✨ Inspiration', reference:'🖼 Reference', opportunity:'💼 Opportunity', misc:'📌 Misc' };
+  const proj = cap.projectId && cap.projectId!=='general'
+    ? state.projects.find(p=>p.id===cap.projectId)
+    : null;
+
+  const modal = document.createElement('div');
+  modal.className = 'capture-detail-modal';
+  modal.id = 'captureDetailModal';
+
+  modal.innerHTML = `
+    <div class="capture-detail-header">
+      <button onclick="document.getElementById('captureDetailModal').remove()" style="background:transparent;border:none;color:var(--text);font-size:15px;cursor:pointer;">← Back</button>
+      <div style="font-size:13px;color:var(--text-faint)">${typeLabels[cap.type]||'Capture'}</div>
+      <div style="width:60px"></div>
+    </div>
+    <div class="capture-detail-img">
+      <img src="${cap.imageData}" alt="${cap.title||'Capture'}">
+      <div class="capture-detail-info">
+        <div class="capture-detail-title">${cap.title||'Untitled'}</div>
+        ${proj?`<div class="capture-detail-row"><span class="capture-detail-label">Project:</span>${proj.name}</div>`:''}
+        ${cap.source?`<div class="capture-detail-row"><span class="capture-detail-label">Source:</span>${cap.source}</div>`:''}
+        ${cap.deadline?`<div class="capture-detail-row"><span class="capture-detail-label">Deadline:</span>${cap.deadline}</div>`:''}
+        ${cap.aiSuggestion?`<div class="capture-detail-row" style="flex-direction:column;gap:3px;"><span class="capture-detail-label">AI note:</span><span>${cap.aiSuggestion}</span></div>`:''}
+        <div class="capture-detail-row"><span class="capture-detail-label">Saved:</span>${new Date(cap.confirmedAt||cap.createdAt).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'})}</div>
+        <button class="capture-delete-btn" onclick="deleteCaptureFromVault('${cap.id}')">🗑 Delete from Vault</button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(modal);
+}
+
+async function deleteCaptureFromVault(id){
+  if(!confirm('Delete this capture permanently?')) return;
+  state.captures = (state.captures||[]).filter(c=>c.id!==id);
+  await saveState();
+  // Close detail modal and refresh vault
+  document.getElementById('captureDetailModal')?.remove();
+  document.getElementById('vaultModal')?.remove();
+  renderVaultFolders();
+  updateCapturesBadge();
+  showFeedback('Capture deleted');
 }
 
 // ---- Gallery picker ----
@@ -688,6 +867,9 @@ function renderCapturesInbox(){
         </div>
 
         <div class="inbox-card-actions">
+          ${(cap.type==='inspiration'||cap.type==='reference') && !cap.incubated ? `
+          <button class="inbox-btn-incubate" onclick="incubateIdea('${cap.id}')">⚡ Incubate Idea</button>
+          ` : cap.incubated ? `<div class="incubate-spawned">⚡ Project spawned → check Dashboard</div>` : ''}
           <button class="inbox-btn-confirm" onclick="confirmCapture('${cap.id}')">Save to Vault ✓</button>
           <button class="inbox-btn-discard" onclick="discardCapture('${cap.id}')">Discard</button>
         </div>
@@ -722,8 +904,8 @@ async function confirmCapture(id){
   cap.confirmed = true;
   cap.confirmedAt = new Date().toISOString();
 
-  // If it's an opportunity, create a reminder task
   if(cap.type === 'opportunity'){
+    // Create a task reminder
     const taskText = `Send portfolio for: ${cap.title||'opportunity'}${cap.deadline?' (deadline: '+cap.deadline+')':''}`;
     if(!state.tasks) state.tasks = [];
     state.tasks.push({
@@ -732,8 +914,29 @@ async function confirmCapture(id){
       freq: 'One-off',
       done: false,
     });
+
+    // Carve a 1-hour block — add to blockedSlots as a scheduled "Opportunity" block
+    // We flag it differently so it shows as a work item not a block-out
+    if(!state.opportunityBlocks) state.opportunityBlocks = [];
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const dayName = days[tomorrow.getDay()];
+    state.opportunityBlocks.push({
+      id: 'opp_' + Date.now(),
+      captureId: id,
+      day: dayName,
+      blockId: 'morning',
+      title: cap.title || 'Portfolio send',
+      deadline: cap.deadline || '',
+    });
+
     renderTasks();
-    showFeedback('✓ Saved + reminder created for this opportunity');
+    renderSchedule();
+
+    // Schedule a native notification
+    await scheduleOpportunityNotification(cap);
+    showFeedback('✓ Saved + reminder set + morning block reserved for tomorrow');
   } else {
     showFeedback('✓ Saved to Vault');
   }
@@ -742,6 +945,138 @@ async function confirmCapture(id){
   renderCapturesInbox();
   renderVaultFolders();
   updateCapturesBadge();
+}
+
+async function scheduleOpportunityNotification(cap){
+  const LN = window.Capacitor?.Plugins?.LocalNotifications;
+  if(!LN) return;
+  try{
+    const perm = await LN.requestPermissions();
+    if(perm.display !== 'granted') return;
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(9, 30, 0, 0); // 9:30am morning block
+    await LN.schedule({ notifications: [{
+      id: Math.floor(Math.random() * 900000) + 100000,
+      title: '💼 Portfolio opportunity reminder',
+      body: `${cap.title||'Opportunity'} — time to send your portfolio.${cap.deadline?' Deadline: '+cap.deadline:''}`,
+      schedule: { at: tomorrow },
+    }]});
+  }catch(e){ console.warn('Opportunity notification failed:', e); }
+}
+
+// ---- ⚡ Incubate Idea — spawns an Own IP project from a capture ----
+async function incubateIdea(id){
+  const cap = (state.captures||[]).find(c=>c.id===id);
+  if(!cap) return;
+
+  const apiKey = localStorage.getItem('spud-os-api-key');
+  const provider = localStorage.getItem('spud-os-provider') || 'anthropic';
+
+  if(!apiKey){
+    alert('Add your API key in the Assistant section on the Dashboard to use Incubate.');
+    return;
+  }
+
+  const btn = document.querySelector(`#cap_${cap.id} .inbox-btn-incubate`);
+  if(btn){ btn.disabled = true; btn.textContent = '⚡ Thinking…'; }
+
+  const prompt = `You are a creative project advisor for a freelance illustrator named Spud who creates NFT art, character designs, comic books, and brand illustrations.
+
+Look at this image. Generate a creative project concept that Spud could develop as original IP (Own IP).
+
+Respond ONLY with a JSON object — no markdown, no explanation:
+{
+  "name": "project name (punchy, max 5 words)",
+  "goal": "what Spud would create (max 15 words)",
+  "estimateHrs": 20,
+  "deadline": "TBD"
+}
+
+Keep it realistic for a solo freelance illustrator. Think: NFT collections, character series, comic concepts, illustration drops.`;
+
+  try{
+    let result = null;
+    const base64 = cap.imageData.split(',')[1];
+    const mediaType = cap.imageData.split(';')[0].split(':')[1] || 'image/jpeg';
+
+    if(provider === 'anthropic'){
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version':'2023-06-01',
+          'anthropic-dangerous-direct-browser-access':'true',
+        },
+        body: JSON.stringify({
+          model:'claude-sonnet-4-6',
+          max_tokens:300,
+          messages:[{ role:'user', content:[
+            { type:'image', source:{ type:'base64', media_type:mediaType, data:base64 } },
+            { type:'text', text:prompt }
+          ]}]
+        })
+      });
+      const data = await res.json();
+      if(data.error) throw new Error(data.error.message);
+      const text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+      result = JSON.parse(text.replace(/```json|```/g,'').trim());
+    } else {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ contents:[{ parts:[
+          { inline_data:{ mime_type:mediaType, data:base64 } },
+          { text:prompt }
+        ]}]})
+      });
+      const data = await res.json();
+      if(data.error) throw new Error(data.error.message);
+      const text = data.candidates?.[0]?.content?.parts?.map(p=>p.text).join('')||'';
+      result = JSON.parse(text.replace(/```json|```/g,'').trim());
+    }
+
+    if(result){
+      // Spawn the project card
+      const hrsWk = Math.max(2, Math.round((result.estimateHrs||20)/4));
+      const newProj = {
+        id: 'incub_' + Date.now(),
+        name: result.name,
+        type: 'own',
+        color: '#9B8CFF',
+        goal: result.goal,
+        deadline: result.deadline || 'TBD',
+        progress: 0,
+        status: 'Not started',
+        allocHrsPerWeek: hrsWk,
+        totalEstimate: result.estimateHrs || 20,
+        priority: 3,
+        weeklySlots: [],
+        fixed: false,
+        preferredBlock: 'any',
+        spawnedFrom: id, // reference back to capture
+      };
+      state.projects.push(newProj);
+      cap.incubated = true;
+      cap.incubatedProjectId = newProj.id;
+
+      await saveState();
+      renderProjects();
+      renderSchedule();
+      renderWeek();
+      populateProjectSelects();
+      renderCapturesInbox();
+      showFeedback(`⚡ "${result.name}" added to your projects!`);
+
+      // Switch to Dashboard to show the new card
+      setTimeout(()=>switchMainTab('dashboard'), 1500);
+    }
+
+  }catch(err){
+    if(btn){ btn.disabled = false; btn.textContent = '⚡ Incubate Idea'; }
+    alert('Incubate failed: ' + (err.message||'unknown error'));
+  }
 }
 
 async function discardCapture(id){
@@ -1910,6 +2245,9 @@ function updateChatVisibility(){
   // Native app: load live calendar events
   await loadCalendarEvents();
 
+  // Native app: handle incoming shared image from share sheet
+  await handleIncomingShare();
+
   // Web fallback: ask for browser notification permission
   if('Notification' in window){
     if(Notification.permission === 'default'){
@@ -2035,10 +2373,100 @@ async function scheduleLocalNotifications(){
       tomorrow9.setMinutes(tomorrow9.getMinutes()+2); // stagger if multiple
     });
 
-    if(notifications.length) await LN.schedule({ notifications });
+// ---- Share sheet handler ----
+// Receives images shared from Instagram, Chrome, etc. via Android share intent
+async function handleIncomingShare(){
+  try{
+    const App = window.Capacitor?.Plugins?.App;
+    if(!App) return; // web only — skip
+
+    // Check for a pending shared file on app launch
+    // Capacitor's App plugin fires 'appUrlOpen' for deep links
+    // For share intents, we use the FileOpener approach via appStateChange + intent data
+    // The actual file path comes via window.sharedImagePath set by MainActivity
+    if(window.sharedImagePath){
+      await processSharedFile(window.sharedImagePath);
+      window.sharedImagePath = null;
+      return;
+    }
+
+    // Listen for shares while app is already open
+    App.addListener('appUrlOpen', async (data)=>{
+      if(data.url && data.url.startsWith('file://')){
+        await processSharedFile(data.url);
+      }
+    });
+
+    // Also listen via broadcast from MainActivity's onNewIntent
+    document.addEventListener('shareReceived', async (e)=>{
+      if(e.detail?.filePath){
+        await processSharedFile(e.detail.filePath);
+      }
+    });
+
   }catch(e){
-    console.error('Notification scheduling failed:', e);
+    console.warn('Share handler setup failed:', e);
   }
+}
+
+async function processSharedFile(filePath){
+  try{
+    const Filesystem = window.Capacitor?.Plugins?.Filesystem;
+    if(!Filesystem) return;
+
+    // Read the file as base64
+    const result = await Filesystem.readFile({ path: filePath });
+    const base64 = result.data;
+
+    // Detect mime type from extension
+    const ext = filePath.split('.').pop()?.toLowerCase() || 'jpg';
+    const mimeMap = { jpg:'image/jpeg', jpeg:'image/jpeg', png:'image/png', webp:'image/webp', gif:'image/gif' };
+    const mimeType = mimeMap[ext] || 'image/jpeg';
+    const imageData = `data:${mimeType};base64,${base64}`;
+
+    // Create capture and add to inbox
+    const capture = {
+      id: 'share_' + Date.now(),
+      imageData,
+      title: 'Shared image',
+      type: 'inspiration',
+      projectId: 'general',
+      source: '',
+      deadline: '',
+      note: '',
+      confirmed: false,
+      createdAt: new Date().toISOString(),
+      fromShare: true,
+    };
+
+    if(!state.captures) state.captures = [];
+    state.captures.push(capture);
+    await saveState();
+
+    // Switch to Captures tab and show inbox
+    switchMainTab('captures');
+    renderCapturesInbox();
+    updateCapturesBadge();
+
+    // Show a brief toast
+    showShareToast('📸 Screenshot added to your Captures inbox!');
+
+  }catch(e){
+    console.error('Failed to process shared file:', e);
+  }
+}
+
+function showShareToast(msg){
+  const toast = document.createElement('div');
+  toast.style.cssText = `
+    position:fixed; bottom:30px; left:50%; transform:translateX(-50%);
+    background:var(--own); color:#16151A; padding:12px 20px;
+    border-radius:40px; font-size:13px; font-weight:700;
+    z-index:9999; white-space:nowrap; box-shadow:0 4px 20px rgba(0,0,0,0.4);
+  `;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(()=>toast.remove(), 3500);
 }
 </script>
 </body>
