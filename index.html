@@ -1878,7 +1878,7 @@ Respond ONLY with a JSON object — no markdown, no explanation:
 Quest types to rotate through: WIP/process share, finished artwork showcase, hot take/opinion, behind the scenes, community question, project announcement, personal story, industry insight, client work tease, meme/humor.`;
 
   try{
-    let quests = [];
+    let result = null;
 
     if(provider === 'anthropic'){
       const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -1898,7 +1898,7 @@ Quest types to rotate through: WIP/process share, finished artwork showcase, hot
       const data = await res.json();
       if(data.error) throw new Error(data.error.message);
       const text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
-      quests = JSON.parse(text.replace(/```json|```/g,'').trim());
+      result = JSON.parse(text.replace(/```json|```/g,'').trim());
     } else {
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
         method:'POST',
@@ -1908,10 +1908,10 @@ Quest types to rotate through: WIP/process share, finished artwork showcase, hot
       const data = await res.json();
       if(data.error) throw new Error(data.error.message);
       const text = data.candidates?.[0]?.content?.parts?.map(p=>p.text).join('')||'';
-      quests = JSON.parse(text.replace(/```json|```/g,'').trim());
+      result = JSON.parse(text.replace(/```json|```/g,'').trim());
     }
 
-    // Save to state — normalise to flat quests array for rendering
+    // Normalise to flat quests array for rendering
     const quests = result.platforms.map(p=>({
       ...p,
       type: result.contentType,
