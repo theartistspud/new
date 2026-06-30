@@ -158,11 +158,11 @@
     position:sticky; top:0; z-index:100;
   }
   .main-tab-btn{
-    flex:1; display:flex; align-items:center; justify-content:center; gap:7px;
-    padding:10px 8px; border:none; border-radius:10px;
+    flex:1; display:flex; align-items:center; justify-content:center; gap:5px;
+    padding:10px 4px; border:none; border-radius:10px;
     background:transparent; color:var(--text-dim);
-    font-size:13px; font-weight:600; cursor:pointer;
-    transition:all .15s; position:relative;
+    font-size:12px; font-weight:600; cursor:pointer;
+    transition:all .15s; position:relative; white-space:nowrap;
   }
   .main-tab-btn.active{
     background:var(--panel-2); color:var(--text);
@@ -454,6 +454,96 @@
     border:none; cursor:pointer; margin-top:6px; padding:0;
   }
   .block-out-btn{ display:none; } /* removed — blocks auto-assigned */
+
+  /* ---- Social Analytics ---- */
+  .analytics-empty{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:20px 16px; text-align:center; color:var(--text-faint); font-size:13px; margin-bottom:8px;
+  }
+  .analytics-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px; }
+  .analytics-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:14px; display:flex; flex-direction:column; gap:4px;
+  }
+  .analytics-platform{ font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; }
+  .analytics-platform.twitter{ color:#1DA1F2; }
+  .analytics-platform.instagram{ color:#E1306C; }
+  .analytics-stat{ font-size:20px; font-weight:800; color:var(--text); }
+  .analytics-delta{ font-size:11px; font-weight:700; }
+  .analytics-delta.up{ color:#1DB954; }
+  .analytics-delta.down{ color:#E24B4A; }
+  .analytics-delta.flat{ color:var(--text-faint); }
+  .analytics-date{ font-size:10px; color:var(--text-faint); }
+  .analytics-insight-btn{
+    width:100%; padding:11px; border:1px solid var(--own); border-radius:10px;
+    background:transparent; color:var(--own); font-size:13px; font-weight:700;
+    cursor:pointer; margin-bottom:8px;
+  }
+  .analytics-insight-banner{
+    background:rgba(155,140,255,0.08); border:1px solid rgba(155,140,255,0.2);
+    border-radius:var(--radius); padding:12px 14px; margin-bottom:8px;
+    font-size:13px; color:var(--text-dim); line-height:1.6; white-space:pre-wrap;
+  }
+  .analytics-modal{
+    position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:400;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .analytics-modal-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:20px; width:100%; max-width:400px; max-height:85vh; overflow-y:auto;
+  }
+  .analytics-field-group{ margin-bottom:14px; }
+  .analytics-field-label{ font-size:12px; font-weight:700; color:var(--text-dim); margin-bottom:6px; }
+  .analytics-input-row{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .analytics-input{
+    background:var(--panel-2); color:var(--text); border:1px solid var(--line);
+    border-radius:8px; padding:9px 11px; font-size:13px; width:100%;
+  }
+
+  /* ---- Weekly Video Idea ---- */
+  .video-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px; margin-bottom:8px;
+  }
+  .video-format-badge{
+    display:inline-block; font-size:11px; font-weight:800; text-transform:uppercase;
+    letter-spacing:0.06em; padding:4px 10px; border-radius:20px;
+    background:rgba(155,140,255,0.15); color:var(--own); margin-bottom:10px;
+  }
+  .video-title{ font-size:15px; font-weight:700; color:var(--text); margin-bottom:6px; }
+  .video-desc{ font-size:13px; color:var(--text-dim); line-height:1.6; margin-bottom:12px; }
+  .video-phase-tabs{ display:flex; gap:6px; margin-bottom:12px; }
+  .video-phase-tab{
+    flex:1; padding:9px 6px; border:1px solid var(--line); border-radius:9px;
+    background:var(--panel-2); color:var(--text-dim); font-size:12px; font-weight:700;
+    cursor:pointer; text-align:center; position:relative; transition:all .15s;
+  }
+  .video-phase-tab.active{ background:var(--own); color:#16151A; border-color:var(--own); }
+  .video-phase-tab.complete:not(.active){ border-color:#1DB954; color:#1DB954; }
+  .video-phase-progress{ font-size:9px; opacity:0.8; display:block; margin-top:2px; }
+  .video-checklist{ display:flex; flex-direction:column; gap:0; margin-bottom:12px; }
+  .video-check-item{
+    display:flex; align-items:flex-start; gap:10px; padding:9px 0;
+    border-bottom:1px solid var(--line); cursor:pointer;
+  }
+  .video-check-item:last-child{ border-bottom:none; }
+  .video-checkbox{
+    width:18px; height:18px; border-radius:5px; border:1.5px solid var(--text-faint);
+    flex-shrink:0; margin-top:1px; display:flex; align-items:center; justify-content:center;
+    transition:all .15s;
+  }
+  .video-checkbox.checked{ background:var(--own); border-color:var(--own); }
+  .video-checkbox.checked::after{ content:"✓"; color:#16151A; font-size:11px; font-weight:900; }
+  .video-check-text{ font-size:13px; color:var(--text); flex:1; }
+  .video-check-text.done{ text-decoration:line-through; color:var(--text-faint); }
+  .video-overall-bar{ height:5px; background:var(--panel-2); border-radius:3px; overflow:hidden; margin-bottom:12px; }
+  .video-overall-fill{ height:100%; background:var(--own); border-radius:3px; transition:width .3s; }
+  .video-posted-btn{
+    width:100%; padding:12px; border:none; border-radius:10px;
+    background:#1DB954; color:#fff; font-size:14px; font-weight:700; cursor:pointer;
+  }
+  .video-posted-btn:disabled{ opacity:0.4; cursor:default; }
+  .video-week-meta{ font-size:11px; color:var(--text-faint); margin-bottom:10px; }
   .archive-row{ display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); }
   .archive-row:last-child{ border-bottom:none; }
   .archive-dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
@@ -478,6 +568,9 @@
     <button class="main-tab-btn active" id="mainTabDashboard" onclick="switchMainTab('dashboard')" role="tab">
       🎛 Dashboard
     </button>
+    <button class="main-tab-btn" id="mainTabGrow" onclick="switchMainTab('grow')" role="tab">
+      🚀 Grow
+    </button>
     <button class="main-tab-btn" id="mainTabCaptures" onclick="switchMainTab('captures')" role="tab">
       📸 Captures
       <span class="main-tab-badge" id="capturesBadge">0</span>
@@ -491,12 +584,6 @@
     <div class="ico">⚡</div>
     <div id="nudgeText"></div>
   </div>
-
-  <div class="label" style="display:flex;align-items:center;justify-content:space-between;">
-    <span>🎯 Today's quests</span>
-    <button id="refreshQuestsBtn" onclick="generateDailyQuests(true)" style="font-size:11px;font-weight:700;color:var(--own);background:transparent;border:1px solid var(--own);border-radius:20px;padding:4px 10px;cursor:pointer;">↻ Refresh</button>
-  </div>
-  <div id="dailyQuests"></div>
 
   <div class="label">Active projects — tap to log progress</div>
   <div class="projects" id="projects"></div>
@@ -615,6 +702,29 @@
 
   </div><!-- end #tabDashboard -->
 
+  <!-- ===== GROW TAB ===== -->
+  <div id="tabGrow" style="display:none;">
+
+  <div class="label" style="display:flex;align-items:center;justify-content:space-between;">
+    <span>🎯 Today's quests</span>
+    <button id="refreshQuestsBtn" onclick="generateDailyQuests(true)" style="font-size:11px;font-weight:700;color:var(--own);background:transparent;border:1px solid var(--own);border-radius:20px;padding:4px 10px;cursor:pointer;">↻ Refresh</button>
+  </div>
+  <div id="dailyQuests"></div>
+
+  <div class="label" style="display:flex;align-items:center;justify-content:space-between;">
+    <span>📊 Social analytics</span>
+    <button onclick="openAnalyticsLog()" style="font-size:11px;font-weight:700;color:var(--own);background:transparent;border:1px solid var(--own);border-radius:20px;padding:4px 10px;cursor:pointer;">+ Log stats</button>
+  </div>
+  <div id="analyticsPanel"></div>
+
+  <div class="label" style="display:flex;align-items:center;justify-content:space-between;">
+    <span>🎬 This week's video</span>
+    <button onclick="skipVideoIdea()" style="font-size:11px;font-weight:700;color:var(--text-faint);background:transparent;border:1px solid var(--line);border-radius:20px;padding:4px 10px;cursor:pointer;">Skip →</button>
+  </div>
+  <div id="videoIdeaPanel"></div>
+
+  </div><!-- end #tabGrow -->
+
   <!-- ===== CAPTURES TAB ===== -->
   <div id="tabCaptures" style="display:none;">
 
@@ -660,12 +770,20 @@ function toggleArchive(){
 
 // ---- Main tab switching ----
 function switchMainTab(tab){
-  const isDashboard = tab === 'dashboard';
-  document.getElementById('tabDashboard').style.display = isDashboard ? 'block' : 'none';
-  document.getElementById('tabCaptures').style.display = isDashboard ? 'none' : 'block';
-  document.getElementById('mainTabDashboard').classList.toggle('active', isDashboard);
-  document.getElementById('mainTabCaptures').classList.toggle('active', !isDashboard);
-  if(!isDashboard){
+  document.getElementById('tabDashboard').style.display = tab==='dashboard' ? 'block' : 'none';
+  document.getElementById('tabGrow').style.display = tab==='grow' ? 'block' : 'none';
+  document.getElementById('tabCaptures').style.display = tab==='captures' ? 'block' : 'none';
+
+  document.getElementById('mainTabDashboard').classList.toggle('active', tab==='dashboard');
+  document.getElementById('mainTabGrow').classList.toggle('active', tab==='grow');
+  document.getElementById('mainTabCaptures').classList.toggle('active', tab==='captures');
+
+  if(tab==='grow'){
+    renderAnalyticsPanel();
+    renderVideoIdeaPanel();
+    // Quests render via generateDailyQuests in init, but re-render in case cached
+    if(state.dailyQuests?.quests) renderQuestCards(state.dailyQuests.quests);
+  } else if(tab==='captures'){
     renderCapturesInbox();
     renderVaultFolders();
   }
@@ -1402,6 +1520,8 @@ const DEFAULT_STATE = {
   captures: [],
   dailyQuests: null,
   questHistory: [],
+  analyticsLog: [],
+  videoQuest: null,
   messages: [
     { role:"assistant", text:"Hey Spud — progress tracking is now status-based (Not started → Done), and your schedule assigns specific time blocks per project with phone reminders at the start of each one. Add a project with a goal + deadline and I'll slot it in." }
   ]
@@ -1985,6 +2105,498 @@ async function markQuestDone(idx){
   } else {
     showFeedback(`✓ Quest done! ${remaining} left today.`);
   }
+}
+
+// ---- Social Analytics (manual entry, free — no API needed) ----
+function openAnalyticsLog(){
+  const modal = document.createElement('div');
+  modal.className = 'analytics-modal';
+  modal.id = 'analyticsModal';
+  modal.innerHTML = `
+    <div class="analytics-modal-card">
+      <div style="font-size:15px;font-weight:700;margin-bottom:4px;">Log today's stats</div>
+      <div style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.5;">
+        Check X's free Analytics tab and Instagram's Insights — takes 30 seconds. Leave blank anything you don't have.
+      </div>
+
+      <div class="analytics-field-group">
+        <div class="analytics-field-label">𝕏 Twitter / X</div>
+        <div class="analytics-input-row" style="margin-bottom:6px;">
+          <input class="analytics-input" id="anaTwFollowers" type="number" placeholder="Followers">
+          <input class="analytics-input" id="anaTwImpressions" type="number" placeholder="Impressions (7d)">
+        </div>
+        <input class="analytics-input" id="anaTwTopPost" type="text" placeholder="Best performing post (brief desc)">
+      </div>
+
+      <div class="analytics-field-group">
+        <div class="analytics-field-label">📷 Instagram</div>
+        <div class="analytics-input-row" style="margin-bottom:6px;">
+          <input class="analytics-input" id="anaIgFollowers" type="number" placeholder="Followers">
+          <input class="analytics-input" id="anaIgReach" type="number" placeholder="Reach (7d)">
+        </div>
+        <input class="analytics-input" id="anaIgTopPost" type="text" placeholder="Best performing post (brief desc)">
+      </div>
+
+      <div class="analytics-field-group">
+        <div class="analytics-field-label">🔍 Competitor note (optional)</div>
+        <input class="analytics-input" id="anaCompetitorNote" type="text" placeholder="e.g. @account posting 2x more, getting more engagement">
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:6px;">
+        <button onclick="saveAnalyticsLog()" style="flex:1;padding:11px;background:var(--own);color:#16151A;border:none;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>
+        <button onclick="document.getElementById('analyticsModal').remove()" style="flex:1;padding:11px;background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:10px;font-size:13px;cursor:pointer;">Cancel</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function saveAnalyticsLog(){
+  const entry = {
+    date: new Date().toISOString().slice(0,10),
+    twitter: {
+      followers: parseInt(document.getElementById('anaTwFollowers').value) || null,
+      impressions: parseInt(document.getElementById('anaTwImpressions').value) || null,
+      topPost: document.getElementById('anaTwTopPost').value.trim() || '',
+    },
+    instagram: {
+      followers: parseInt(document.getElementById('anaIgFollowers').value) || null,
+      reach: parseInt(document.getElementById('anaIgReach').value) || null,
+      topPost: document.getElementById('anaIgTopPost').value.trim() || '',
+    },
+    competitorNote: document.getElementById('anaCompetitorNote').value.trim() || '',
+  };
+
+  if(!state.analyticsLog) state.analyticsLog = [];
+  // Replace today's entry if it already exists
+  state.analyticsLog = state.analyticsLog.filter(e=>e.date !== entry.date);
+  state.analyticsLog.push(entry);
+  // Keep last 60 entries
+  if(state.analyticsLog.length > 60) state.analyticsLog = state.analyticsLog.slice(-60);
+
+  document.getElementById('analyticsModal')?.remove();
+  await saveState();
+  renderAnalyticsPanel();
+  showFeedback('✓ Stats logged');
+}
+
+function renderAnalyticsPanel(){
+  const wrap = document.getElementById('analyticsPanel');
+  if(!wrap) return;
+  const log = state.analyticsLog || [];
+
+  if(log.length === 0){
+    wrap.innerHTML = `<div class="analytics-empty">No stats logged yet. Tap "+ Log stats" after checking X Analytics and Instagram Insights — takes 30 seconds.</div>`;
+    return;
+  }
+
+  const latest = log[log.length-1];
+  const prev = log.length > 1 ? log[log.length-2] : null;
+
+  function deltaInfo(curr, prevVal){
+    if(curr == null || prevVal == null) return { text:'', cls:'flat' };
+    const diff = curr - prevVal;
+    if(diff > 0) return { text:`↑ +${diff}`, cls:'up' };
+    if(diff < 0) return { text:`↓ ${diff}`, cls:'down' };
+    return { text:'— no change', cls:'flat' };
+  }
+
+  const twDelta = deltaInfo(latest.twitter?.followers, prev?.twitter?.followers);
+  const igDelta = deltaInfo(latest.instagram?.followers, prev?.instagram?.followers);
+
+  let html = `<div class="analytics-grid">
+    <div class="analytics-card">
+      <div class="analytics-platform twitter">𝕏 Twitter/X</div>
+      <div class="analytics-stat">${latest.twitter?.followers ?? '—'}</div>
+      <div class="analytics-delta ${twDelta.cls}">${twDelta.text || 'followers'}</div>
+      <div class="analytics-date">${new Date(latest.date).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</div>
+    </div>
+    <div class="analytics-card">
+      <div class="analytics-platform instagram">📷 Instagram</div>
+      <div class="analytics-stat">${latest.instagram?.followers ?? '—'}</div>
+      <div class="analytics-delta ${igDelta.cls}">${igDelta.text || 'followers'}</div>
+      <div class="analytics-date">${new Date(latest.date).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</div>
+    </div>
+  </div>`;
+
+  html += `<button class="analytics-insight-btn" onclick="generateAnalyticsInsight()">✨ Analyse trends & get strategy</button>`;
+
+  if(state.lastAnalyticsInsight){
+    html += `<div class="analytics-insight-banner"><strong style="color:var(--own);">✨ Strategy:</strong>\n${state.lastAnalyticsInsight}</div>`;
+  }
+
+  wrap.innerHTML = html;
+}
+
+async function generateAnalyticsInsight(){
+  const apiKey = localStorage.getItem('spud-os-api-key');
+  const provider = localStorage.getItem('spud-os-provider') || 'anthropic';
+  if(!apiKey){ alert('Add your API key in the Assistant section first.'); return; }
+
+  const log = state.analyticsLog || [];
+  if(log.length === 0) return;
+
+  const wrap = document.getElementById('analyticsPanel');
+  const btn = wrap?.querySelector('.analytics-insight-btn');
+  if(btn){ btn.disabled = true; btn.textContent = '✨ Analysing…'; }
+
+  const prompt = `You are a social media growth strategist for Spud, a freelance illustrator and creative director who works on NFT collections, character design, and brand illustration. Spud wants to grow an audience that could convert into paying clients.
+
+Here is Spud's logged stats history (most recent last):
+${JSON.stringify(log)}
+
+Active projects: ${state.projects.filter(p=>(p.progress||0)<100).map(p=>p.name).join(', ')}
+
+Analyse the trend in these numbers and any competitor notes. Respond in plain text (not JSON), max 150 words, covering:
+1. What's working / not working based on the follower and engagement trend
+2. One specific, actionable thing to change this week
+3. If there's a competitor note, react to it specifically
+
+Keep it direct, no fluff, like a sharp strategist giving a quick briefing.`;
+
+  try{
+    let text = '';
+    if(provider === 'anthropic'){
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json', 'x-api-key':apiKey,
+          'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true',
+        },
+        body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:400, messages:[{role:'user',content:prompt}] })
+      });
+      const data = await res.json();
+      if(data.error) throw new Error(data.error.message);
+      text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    } else {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ contents:[{parts:[{text:prompt}]}] })
+      });
+      const data = await res.json();
+      if(data.error) throw new Error(data.error.message);
+      text = data.candidates?.[0]?.content?.parts?.map(p=>p.text).join('')||'';
+    }
+
+    state.lastAnalyticsInsight = text.trim();
+    await saveState();
+    renderAnalyticsPanel();
+  }catch(err){
+    if(btn){ btn.disabled = false; btn.textContent = '✨ Analyse trends & get strategy'; }
+    alert('Analysis failed: ' + (err.message||'unknown error'));
+  }
+}
+
+// ---- Weekly Video Idea Generator ----
+const VIDEO_FORMATS = [
+  {
+    id: 'comeback_reel',
+    label: 'Comeback Reel',
+    emoji: '🔥',
+    promptHint: 'A "comeback" or transformation-style reel — before/after, old work vs new skill, or a glow-up narrative around Spud\'s art journey.',
+  },
+  {
+    id: 'range_flex',
+    label: 'Range Flex',
+    emoji: '🎨',
+    promptHint: 'A showcase of artistic range — multiple styles, characters, or genres in one video to prove versatility.',
+  },
+  {
+    id: 'studio_process',
+    label: 'Studio / Process',
+    emoji: '🖌️',
+    promptHint: 'A process/studio video — timelapse or step-by-step of how a piece gets made, tools used, workspace.',
+  },
+  {
+    id: 'reactive_rating',
+    label: 'Reactive / Rating',
+    emoji: '⭐',
+    promptHint: 'Spud reacting to or rating something — fan art, NFT collections, AI art, trends — with genuine creative-director commentary.',
+  },
+  {
+    id: 'opinion_hottake',
+    label: 'Opinion / Hot Take',
+    emoji: '💭',
+    promptHint: 'A bold, specific opinion about the NFT/art/creative industry — something that invites discussion or disagreement.',
+  },
+  {
+    id: 'wip_sunday',
+    label: 'WIP Sunday',
+    emoji: '🛠️',
+    promptHint: 'A casual "work in progress" check-in — what Spud is currently building, candid and unpolished, community-facing.',
+  },
+];
+
+const VIDEO_CHECKLIST_TEMPLATE = {
+  plan: [
+    { id:'plan_idea', text:'Pick this week\'s idea', auto:true }, // auto-checked when idea generated
+    { id:'plan_shotlist', text:'Write/review the shot list' },
+    { id:'plan_shoot_block', text:'Block a separate shoot time window' },
+    { id:'plan_edit_block', text:'Block a separate edit time window' },
+    { id:'plan_gear', text:'Gear check (camera/phone, light, mic, battery, storage)' },
+  ],
+  shoot: [
+    { id:'shoot_buffer_before', text:'Buffer time before — set up, test shot' },
+    { id:'shoot_shots', text:'Go shot-by-shot through the list, mark each "got it"' },
+    { id:'shoot_broll', text:'Grab extra B-roll (hands, materials, details)' },
+    { id:'shoot_buffer_after', text:'Buffer time after — review footage, reshoot anything weak' },
+  ],
+  edit: [
+    { id:'edit_assembly', text:'Rough assembly — lay out the cut in order' },
+    { id:'edit_pacing', text:'Pacing trim pass — cut dead air, tighten cuts' },
+    { id:'edit_captions', text:'Add captions/text overlays' },
+    { id:'edit_music', text:'Music / sound design pass' },
+    { id:'edit_export', text:'Export per platform (aspect ratio, length, captions burned in)' },
+  ],
+};
+
+const VIDEO_PHASES = [
+  { id:'plan', label:'Plan' },
+  { id:'shoot', label:'Shoot' },
+  { id:'edit', label:'Edit' },
+];
+
+function getNextVideoFormat(){
+  const vq = state.videoQuest;
+  const lastIdx = vq && vq.formatIndex != null ? vq.formatIndex : -1;
+  const nextIdx = (lastIdx + 1) % VIDEO_FORMATS.length;
+  return { format: VIDEO_FORMATS[nextIdx], index: nextIdx };
+}
+
+async function generateVideoIdea(formatOverrideIdx){
+  const wrap = document.getElementById('videoIdeaPanel');
+  if(!wrap) return;
+
+  const { format, index } = formatOverrideIdx != null
+    ? { format: VIDEO_FORMATS[formatOverrideIdx], index: formatOverrideIdx }
+    : getNextVideoFormat();
+
+  const apiKey = localStorage.getItem('spud-os-api-key');
+  const provider = localStorage.getItem('spud-os-provider') || 'anthropic';
+
+  // Build fresh checklist with plan_idea pre-checked
+  const checklist = {};
+  Object.entries(VIDEO_CHECKLIST_TEMPLATE).forEach(([phase, items])=>{
+    checklist[phase] = items.map(i=>({ id:i.id, text:i.text, done: !!i.auto }));
+  });
+
+  if(!apiKey){
+    state.videoQuest = {
+      formatIndex: index,
+      formatId: format.id,
+      title: format.label,
+      description: 'Add your API key in the Assistant section to get AI-generated shot lists.',
+      shotList: [],
+      weekStarted: new Date().toISOString().slice(0,10),
+      activePhase: 'plan',
+      checklist,
+    };
+    await saveState();
+    renderVideoIdeaPanel();
+    return;
+  }
+
+  wrap.innerHTML = `<div class="quest-loading">✨ Generating ${format.label} idea…</div>`;
+
+  const recentTitles = (state.videoHistory||[]).slice(-6).map(v=>v.title).join(', ');
+  const activeProjects = state.projects.filter(p=>(p.progress||0)<100).slice(0,4).map(p=>p.name).join(', ');
+
+  const prompt = `You are a content strategist for Spud, a freelance illustrator and creative director who creates NFT art, character design, and brand illustration. Spud posts video content to grow an audience that can convert into clients.
+
+This week's video format is: "${format.label}" — ${format.promptHint}
+
+Active projects Spud could feature: ${activeProjects}
+Recent video titles (avoid repeating the exact same angle): ${recentTitles || 'none yet'}
+
+Generate ONE specific video concept for this format. Respond ONLY with JSON, no markdown:
+{
+  "title": "short punchy video title (max 8 words)",
+  "description": "2-3 sentences describing the concept and why it fits the ${format.label} format",
+  "shotList": [
+    "Shot 1 description",
+    "Shot 2 description",
+    "Shot 3 description",
+    "... (5-8 shots total, specific and actionable)"
+  ],
+  "estimatedLength": "e.g. 30-45 sec",
+  "platformNote": "one line on which platform this suits best and why (Reels/TikTok/YouTube Shorts)"
+}`;
+
+  try{
+    let result = null;
+    if(provider === 'anthropic'){
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json', 'x-api-key':apiKey,
+          'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true',
+        },
+        body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:800, messages:[{role:'user',content:prompt}] })
+      });
+      const data = await res.json();
+      if(data.error) throw new Error(data.error.message);
+      const text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+      result = JSON.parse(text.replace(/```json|```/g,'').trim());
+    } else {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ contents:[{parts:[{text:prompt}]}] })
+      });
+      const data = await res.json();
+      if(data.error) throw new Error(data.error.message);
+      const text = data.candidates?.[0]?.content?.parts?.map(p=>p.text).join('')||'';
+      result = JSON.parse(text.replace(/```json|```/g,'').trim());
+    }
+
+    state.videoQuest = {
+      formatIndex: index,
+      formatId: format.id,
+      title: result.title,
+      description: result.description,
+      shotList: result.shotList || [],
+      estimatedLength: result.estimatedLength || '',
+      platformNote: result.platformNote || '',
+      weekStarted: new Date().toISOString().slice(0,10),
+      activePhase: 'plan',
+      checklist,
+    };
+    await saveState();
+    renderVideoIdeaPanel();
+
+  }catch(err){
+    wrap.innerHTML = `<div class="quest-loading">⚠ Could not generate idea: ${err.message}</div>`;
+  }
+}
+
+function videoPhaseProgress(phase){
+  const items = state.videoQuest?.checklist?.[phase] || [];
+  const done = items.filter(i=>i.done).length;
+  return { done, total: items.length };
+}
+
+function videoOverallProgress(){
+  if(!state.videoQuest) return 0;
+  let done=0, total=0;
+  VIDEO_PHASES.forEach(p=>{
+    const items = state.videoQuest.checklist?.[p.id] || [];
+    done += items.filter(i=>i.done).length;
+    total += items.length;
+  });
+  return total > 0 ? Math.round((done/total)*100) : 0;
+}
+
+function renderVideoIdeaPanel(){
+  const wrap = document.getElementById('videoIdeaPanel');
+  if(!wrap) return;
+
+  if(!state.videoQuest){
+    wrap.innerHTML = `<div class="quest-loading">✨ Setting up your first weekly video idea…</div>`;
+    generateVideoIdea();
+    return;
+  }
+
+  const vq = state.videoQuest;
+  const format = VIDEO_FORMATS.find(f=>f.id===vq.formatId) || VIDEO_FORMATS[0];
+  const activePhase = vq.activePhase || 'plan';
+  const overallPct = videoOverallProgress();
+
+  let html = `<div class="video-card">
+    <div class="video-format-badge">${format.emoji} ${format.label}</div>
+    <div class="video-title">${vq.title}</div>
+    <div class="video-desc">${vq.description}</div>
+    ${vq.estimatedLength || vq.platformNote ? `<div class="video-week-meta">${vq.estimatedLength?'⏱ '+vq.estimatedLength:''}${vq.estimatedLength&&vq.platformNote?' · ':''}${vq.platformNote?'📱 '+vq.platformNote:''}</div>` : ''}
+
+    <div class="video-overall-bar"><div class="video-overall-fill" style="width:${overallPct}%"></div></div>
+
+    <div class="video-phase-tabs">`;
+
+  VIDEO_PHASES.forEach(phase=>{
+    const prog = videoPhaseProgress(phase.id);
+    const isComplete = prog.total > 0 && prog.done === prog.total;
+    html += `<div class="video-phase-tab ${activePhase===phase.id?'active':''} ${isComplete?'complete':''}" onclick="setVideoPhase('${phase.id}')">
+      ${phase.label}
+      <span class="video-phase-progress">${prog.done}/${prog.total}</span>
+    </div>`;
+  });
+
+  html += `</div>`;
+
+  // Shot list shown only during shoot phase
+  if(activePhase === 'shoot' && vq.shotList?.length){
+    html += `<div style="background:var(--panel-2);border-radius:8px;padding:10px 12px;margin-bottom:12px;">
+      <div style="font-size:11px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">Shot list</div>
+      ${vq.shotList.map((s,i)=>`<div style="font-size:12px;color:var(--text-dim);padding:3px 0;">${i+1}. ${s}</div>`).join('')}
+    </div>`;
+  }
+
+  // Checklist for active phase
+  const items = vq.checklist?.[activePhase] || [];
+  html += `<div class="video-checklist">`;
+  items.forEach(item=>{
+    html += `<div class="video-check-item" onclick="toggleVideoCheck('${activePhase}','${item.id}')">
+      <div class="video-checkbox ${item.done?'checked':''}"></div>
+      <div class="video-check-text ${item.done?'done':''}">${item.text}</div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  const allDone = overallPct === 100;
+  html += `<button class="video-posted-btn" ${!allDone?'disabled':''} onclick="markVideoPosted()">
+    ${allDone ? '✓ Mark as posted — next idea' : `Complete all phases to mark posted (${overallPct}%)`}
+  </button>`;
+
+  html += `</div>`;
+  wrap.innerHTML = html;
+}
+
+function setVideoPhase(phase){
+  if(!state.videoQuest) return;
+  state.videoQuest.activePhase = phase;
+  saveState();
+  renderVideoIdeaPanel();
+}
+
+async function toggleVideoCheck(phase, itemId){
+  if(!state.videoQuest?.checklist?.[phase]) return;
+  const item = state.videoQuest.checklist[phase].find(i=>i.id===itemId);
+  if(!item) return;
+  item.done = !item.done;
+  await saveState();
+  renderVideoIdeaPanel();
+
+  // Auto-advance to next phase if this one just completed
+  const prog = videoPhaseProgress(phase);
+  if(prog.done === prog.total){
+    const phaseIdx = VIDEO_PHASES.findIndex(p=>p.id===phase);
+    if(phaseIdx < VIDEO_PHASES.length - 1){
+      showFeedback(`✓ ${VIDEO_PHASES[phaseIdx].label} phase done!`);
+    }
+  }
+}
+
+async function markVideoPosted(){
+  if(!state.videoQuest) return;
+  // Archive to history
+  if(!state.videoHistory) state.videoHistory = [];
+  state.videoHistory.push({
+    title: state.videoQuest.title,
+    formatId: state.videoQuest.formatId,
+    weekStarted: state.videoQuest.weekStarted,
+    postedAt: new Date().toISOString().slice(0,10),
+  });
+  if(state.videoHistory.length > 30) state.videoHistory = state.videoHistory.slice(-30);
+
+  const completedIndex = state.videoQuest.formatIndex;
+  await saveState();
+  showFeedback('🎉 Video posted! Generating next week\'s idea…');
+
+  // Generate next idea (cycles to next format)
+  await generateVideoIdea();
+}
+
+async function skipVideoIdea(){
+  if(!confirm('Skip this idea and move to the next format? Your checklist progress will be lost.')) return;
+  await generateVideoIdea();
+  showFeedback('Skipped to next format');
 }
 
 function renderDate(){
@@ -2603,6 +3215,8 @@ function updateChatVisibility(){
   renderArchive();
   updateCapturesBadge();
   generateDailyQuests(false);
+  renderAnalyticsPanel();
+  renderVideoIdeaPanel();
   await saveState();
 
   // Register service worker for offline/PWA support (web fallback only)
