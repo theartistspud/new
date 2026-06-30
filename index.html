@@ -21,9 +21,30 @@
     --own:#9B8CFF;
     --biz:#4ABDAC;
     --warn:#FFC857;
+    --danger:#E24B4A;
+    --success:#1DB954;
     --radius:14px;
   }
   *{box-sizing:border-box; margin:0; padding:0;}
+
+  /* ---- Unified button system — every primary/secondary/danger action uses these ---- */
+  .btn{
+    border:none; border-radius:10px; font-weight:700; cursor:pointer;
+    font-family:inherit; transition:opacity .15s, transform .1s;
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .btn:active{ transform:scale(0.98); }
+  .btn:disabled{ opacity:0.4; cursor:default; transform:none; }
+  .btn-primary{ background:var(--own); color:#16151A; padding:12px 16px; font-size:14px; }
+  .btn-primary-sm{ background:var(--own); color:#16151A; padding:9px 14px; font-size:12px; border-radius:9px; }
+  .btn-secondary{ background:transparent; color:var(--text-dim); border:1px solid var(--line); padding:11px 16px; font-size:13px; }
+  .btn-secondary-sm{ background:transparent; color:var(--text-dim); border:1px solid var(--line); padding:8px 12px; font-size:12px; border-radius:9px; }
+  .btn-outline{ background:transparent; color:var(--own); border:1px solid var(--own); padding:11px 16px; font-size:13px; }
+  .btn-success{ background:var(--success); color:#fff; padding:12px 16px; font-size:14px; }
+  .btn-danger-outline{ background:transparent; color:var(--danger); border:1px solid var(--danger); padding:11px 16px; font-size:13px; }
+  .btn-ghost{ background:transparent; color:var(--text-faint); padding:10px 14px; font-size:13px; }
+  .btn-full{ width:100%; }
+  .btn-pill{ border-radius:20px; }
   body{
     font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
     background:var(--bg);
@@ -54,6 +75,14 @@
     display:flex; gap:10px; align-items:flex-start;
   }
   .nudge .ico{ font-size:15px; line-height:1.3; }
+  .nudge-urgent{
+    background:linear-gradient(135deg, rgba(226,75,74,0.16), rgba(226,75,74,0.05)) !important;
+    border:1px solid rgba(226,75,74,0.4) !important;
+    color:#FF9D9C !important;
+    box-shadow:0 0 0 1px rgba(226,75,74,0.1), 0 4px 16px rgba(226,75,74,0.08);
+  }
+  .nudge-urgent .ico{ animation:pulse-urgent 2s ease-in-out infinite; }
+  @keyframes pulse-urgent{ 0%,100%{ opacity:1; } 50%{ opacity:0.5; } }
 
   .label{
     font-size:11px; font-weight:700; text-transform:uppercase;
@@ -242,38 +271,13 @@
     padding:9px 12px; font-size:13px; font-family:inherit;
   }
   .inbox-card-actions{ display:flex; gap:8px; }
-  .inbox-btn-confirm{
-    flex:1; padding:10px; border:none; border-radius:10px;
-    background:var(--own); color:#16151A;
-    font-size:13px; font-weight:700; cursor:pointer;
-  }
-  .inbox-btn-discard{
-    padding:10px 14px; border:1px solid var(--line); border-radius:10px;
-    background:transparent; color:var(--text-faint);
-    font-size:13px; cursor:pointer;
-  }
   .inbox-project-select{
     width:100%; background:var(--panel-2); color:var(--text);
     border:1px solid var(--line); border-radius:8px;
     padding:9px 12px; font-size:13px;
   }
-  .inbox-btn-ai{
-    width:100%; padding:10px; border:1px solid var(--own);
-    border-radius:10px; background:transparent;
-    color:var(--own); font-size:13px; font-weight:700;
-    cursor:pointer; display:flex; align-items:center;
-    justify-content:center; gap:8px; transition:all .15s;
-  }
-  .inbox-btn-ai:hover{ background:rgba(155,140,255,0.1); }
-  .inbox-btn-ai:disabled{ opacity:0.5; cursor:default; }
-  .inbox-btn-incubate{
-    width:100%; padding:10px; border:1px solid var(--client);
-    border-radius:10px; background:transparent;
-    color:var(--client); font-size:13px; font-weight:700;
-    cursor:pointer; display:flex; align-items:center;
-    justify-content:center; gap:8px; transition:all .15s;
-  }
-  .inbox-btn-incubate:hover{ background:rgba(255,138,92,0.1); }
+  .btn-incubate{ color:var(--client) !important; border-color:var(--client) !important; }
+  .btn-incubate:hover{ background:rgba(255,138,92,0.1); }
   .incubate-spawned{
     background:rgba(155,140,255,0.08); border:1px solid rgba(155,140,255,0.3);
     border-radius:10px; padding:10px 12px; font-size:12px;
@@ -348,12 +352,6 @@
   .capture-detail-title{ font-size:15px; font-weight:700; color:var(--text); }
   .capture-detail-row{ font-size:13px; color:var(--text-dim); display:flex; gap:8px; }
   .capture-detail-label{ color:var(--text-faint); flex-shrink:0; }
-  .capture-delete-btn{
-    width:100%; padding:11px; border:1px solid #E24B4A;
-    border-radius:10px; background:transparent;
-    color:#E24B4A; font-size:13px; font-weight:700; cursor:pointer;
-    margin-top:4px;
-  }
   .ai-suggestion-banner{
     background:rgba(155,140,255,0.08);
     border:1px solid rgba(155,140,255,0.25);
@@ -379,12 +377,6 @@
     cursor:pointer; transition:all .15s; white-space:nowrap;
   }
   .prio-chip.active{ background:var(--panel); color:var(--text); border-color:var(--own); }
-  .action-btn{
-    width:100%; padding:12px; border:none; border-radius:10px;
-    background:var(--own); color:#16151A; font-size:14px; font-weight:700;
-    cursor:pointer; transition:opacity .15s;
-  }
-  .action-btn:active{ opacity:0.8; }
   .panel{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; margin-bottom:0; }
 
   .schedule{ display:flex; flex-direction:column; gap:8px; }
@@ -432,18 +424,7 @@
   }
   .quest-hashtags{ font-size:11px; color:var(--own); margin-bottom:10px; line-height:1.7; }
   .quest-actions{ display:flex; gap:8px; }
-  .quest-copy-btn{
-    flex:1; padding:9px; border:1px solid var(--line); border-radius:9px;
-    background:transparent; color:var(--text-dim); font-size:12px;
-    font-weight:600; cursor:pointer;
-  }
-  .quest-copy-btn:hover{ border-color:var(--own); color:var(--own); }
-  .quest-done-btn{
-    flex:1; padding:9px; border:none; border-radius:9px;
-    background:var(--own); color:#16151A; font-size:12px;
-    font-weight:700; cursor:pointer;
-  }
-  .quest-done-btn.completed{ background:var(--panel-2); color:var(--text-faint); border:1px solid var(--line); }
+  .quest-done-btn.completed{ background:var(--panel-2) !important; color:var(--text-faint) !important; border:1px solid var(--line) !important; }
   .quest-loading{
     text-align:center; padding:30px 16px; color:var(--text-faint);
     font-size:13px; background:var(--panel); border-radius:var(--radius);
@@ -474,11 +455,6 @@
   .analytics-delta.down{ color:#E24B4A; }
   .analytics-delta.flat{ color:var(--text-faint); }
   .analytics-date{ font-size:10px; color:var(--text-faint); }
-  .analytics-insight-btn{
-    width:100%; padding:11px; border:1px solid var(--own); border-radius:10px;
-    background:transparent; color:var(--own); font-size:13px; font-weight:700;
-    cursor:pointer; margin-bottom:8px;
-  }
   .analytics-insight-banner{
     background:rgba(155,140,255,0.08); border:1px solid rgba(155,140,255,0.2);
     border-radius:var(--radius); padding:12px 14px; margin-bottom:8px;
@@ -538,11 +514,6 @@
   .video-check-text.done{ text-decoration:line-through; color:var(--text-faint); }
   .video-overall-bar{ height:5px; background:var(--panel-2); border-radius:3px; overflow:hidden; margin-bottom:12px; }
   .video-overall-fill{ height:100%; background:var(--own); border-radius:3px; transition:width .3s; }
-  .video-posted-btn{
-    width:100%; padding:12px; border:none; border-radius:10px;
-    background:#1DB954; color:#fff; font-size:14px; font-weight:700; cursor:pointer;
-  }
-  .video-posted-btn:disabled{ opacity:0.4; cursor:default; }
   .video-week-meta{ font-size:11px; color:var(--text-faint); margin-bottom:10px; }
   .archive-row{ display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); }
   .archive-row:last-child{ border-bottom:none; }
@@ -581,7 +552,7 @@
   <div id="tabDashboard">
 
   <div class="nudge" id="nudgeBar" style="display:none">
-    <div class="ico">⚡</div>
+    <div class="ico" id="nudgeIcon">⚡</div>
     <div id="nudgeText"></div>
   </div>
 
@@ -623,7 +594,7 @@
           <button class="prio-chip" id="prio3" onclick="selectPrio(3)">🟢 Drip</button>
         </div>
       </div>
-      <button class="action-btn" style="margin-top:10px;" onclick="updateStatus()">Update ✓</button>
+      <button class="btn btn-primary btn-full" style="margin-top:10px;" onclick="updateStatus()">Update ✓</button>
     </div>
 
     <!-- Add project tab -->
@@ -654,7 +625,7 @@
           <button class="prio-chip" id="addPrio3" onclick="selectAddPrio(3)">🟢 Drip</button>
         </div>
       </div>
-      <button class="action-btn" style="margin-top:10px;" onclick="addProject()">Add project ✓</button>
+      <button class="btn btn-primary btn-full" style="margin-top:10px;" onclick="addProject()">Add project ✓</button>
     </div>
 
     <!-- Add task tab -->
@@ -666,7 +637,7 @@
         <button class="prio-chip" id="freqDaily" onclick="selectFreq('Every day')">Every day</button>
         <button class="prio-chip" id="freqAlt" onclick="selectFreq('Every other day')">Every other day</button>
       </div>
-      <button class="action-btn" onclick="addTask()">Add task ✓</button>
+      <button class="btn btn-primary btn-full" onclick="addTask()">Add task ✓</button>
     </div>
 
     <div id="logFeedback" style="font-size:13px; color:var(--biz); min-height:18px; font-weight:600;"></div>
@@ -920,7 +891,7 @@ function openCaptureDetail(id){
         ${cap.deadline?`<div class="capture-detail-row"><span class="capture-detail-label">Deadline:</span>${cap.deadline}</div>`:''}
         ${cap.aiSuggestion?`<div class="capture-detail-row" style="flex-direction:column;gap:3px;"><span class="capture-detail-label">AI note:</span><span>${cap.aiSuggestion}</span></div>`:''}
         <div class="capture-detail-row"><span class="capture-detail-label">Saved:</span>${new Date(cap.confirmedAt||cap.createdAt).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'})}</div>
-        <button class="capture-delete-btn" onclick="deleteCaptureFromVault('${cap.id}')">🗑 Delete from Vault</button>
+        <button class="btn btn-danger-outline btn-full" style="margin-top:4px;" onclick="deleteCaptureFromVault('${cap.id}')">🗑 Delete from Vault</button>
       </div>
     </div>`;
 
@@ -1032,7 +1003,7 @@ function renderCapturesInbox(){
 
         ${cap.aiSuggestion ? `<div class="ai-suggestion-banner">
           <strong>✨ AI read this as:</strong> ${cap.aiSuggestion}
-        </div>` : `<button class="inbox-btn-ai" id="aibtn_${cap.id}" onclick="analyseWithAI('${cap.id}')">
+        </div>` : `<button class="btn btn-outline btn-full" id="aibtn_${cap.id}" onclick="analyseWithAI('${cap.id}')">
           ✨ Analyse with AI
         </button>`}
 
@@ -1066,10 +1037,10 @@ function renderCapturesInbox(){
 
         <div class="inbox-card-actions">
           ${(cap.type==='inspiration'||cap.type==='reference') && !cap.incubated ? `
-          <button class="inbox-btn-incubate" onclick="incubateIdea('${cap.id}')">⚡ Incubate Idea</button>
+          <button class="btn btn-outline btn-incubate btn-full" onclick="incubateIdea('${cap.id}')">⚡ Incubate Idea</button>
           ` : cap.incubated ? `<div class="incubate-spawned">⚡ Project spawned → check Dashboard</div>` : ''}
-          <button class="inbox-btn-confirm" onclick="confirmCapture('${cap.id}')">Save to Vault ✓</button>
-          <button class="inbox-btn-discard" onclick="discardCapture('${cap.id}')">Discard</button>
+          <button class="btn btn-primary" style="flex:1;" onclick="confirmCapture('${cap.id}')">Save to Vault ✓</button>
+          <button class="btn btn-ghost" style="border:1px solid var(--line);" onclick="discardCapture('${cap.id}')">Discard</button>
         </div>
       </div>`;
 
@@ -1183,7 +1154,7 @@ async function incubateIdea(id){
     return;
   }
 
-  const btn = document.querySelector(`#cap_${cap.id} .inbox-btn-incubate`);
+  const btn = document.querySelector(`#cap_${cap.id} .btn-incubate`);
   if(btn){ btn.disabled = true; btn.textContent = '⚡ Thinking…'; }
 
   const prompt = `You are a creative project advisor for a freelance illustrator named Spud who creates NFT art, character designs, comic books, and brand illustrations.
@@ -2031,9 +2002,9 @@ function renderQuestCards(quests){
       <div class="quest-hashtags">${q.hashtags}</div>
       ${q.formatTip ? `<div style="font-size:11px;color:var(--biz);margin-bottom:10px;">💡 ${q.formatTip}</div>` : ''}
       <div class="quest-actions">
-        <button class="quest-copy-btn" onclick="copyQuestCaption(${idx})">📋 Copy caption</button>
-        <button class="quest-copy-btn" onclick="copyQuestHashtags(${idx})">🏷 Hashtags</button>
-        <button class="quest-done-btn ${done?'completed':''}" onclick="markQuestDone(${idx})">
+        <button class="btn btn-secondary-sm" style="flex:1;" onclick="copyQuestCaption(${idx})">📋 Copy caption</button>
+        <button class="btn btn-secondary-sm" style="flex:1;" onclick="copyQuestHashtags(${idx})">🏷 Hashtags</button>
+        <button class="btn btn-primary-sm quest-done-btn ${done?'completed':''}" style="flex:1;" onclick="markQuestDone(${idx})">
           ${done ? '✓ Done' : 'Mark done'}
         </button>
       </div>
@@ -2143,8 +2114,8 @@ function openAnalyticsLog(){
       </div>
 
       <div style="display:flex;gap:8px;margin-top:6px;">
-        <button onclick="saveAnalyticsLog()" style="flex:1;padding:11px;background:var(--own);color:#16151A;border:none;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;">Save</button>
-        <button onclick="document.getElementById('analyticsModal').remove()" style="flex:1;padding:11px;background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:10px;font-size:13px;cursor:pointer;">Cancel</button>
+        <button onclick="saveAnalyticsLog()" class="btn btn-primary" style="flex:1;">Save</button>
+        <button onclick="document.getElementById('analyticsModal').remove()" class="btn btn-secondary" style="flex:1;">Cancel</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
@@ -2218,7 +2189,7 @@ function renderAnalyticsPanel(){
     </div>
   </div>`;
 
-  html += `<button class="analytics-insight-btn" onclick="generateAnalyticsInsight()">✨ Analyse trends & get strategy</button>`;
+  html += `<button class="btn btn-outline btn-full analytics-insight-btn" onclick="generateAnalyticsInsight()">✨ Analyse trends & get strategy</button>`;
 
   if(state.lastAnalyticsInsight){
     html += `<div class="analytics-insight-banner"><strong style="color:var(--own);">✨ Strategy:</strong>\n${state.lastAnalyticsInsight}</div>`;
@@ -2540,7 +2511,7 @@ function renderVideoIdeaPanel(){
   html += `</div>`;
 
   const allDone = overallPct === 100;
-  html += `<button class="video-posted-btn" ${!allDone?'disabled':''} onclick="markVideoPosted()">
+  html += `<button class="btn btn-success btn-full" ${!allDone?'disabled':''} onclick="markVideoPosted()">
     ${allDone ? '✓ Mark as posted — next idea' : `Complete all phases to mark posted (${overallPct}%)`}
   </button>`;
 
@@ -2661,7 +2632,10 @@ function renderNudge(){
   if(candidates.length === 0){ el.style.display='none'; return; }
   if(sessionNudgeIdx < 0 || urgent.length > 0) sessionNudgeIdx = 0;
   sessionNudgeIdx = sessionNudgeIdx % candidates.length;
+  const isUrgent = sessionNudgeIdx < urgent.length;
   document.getElementById('nudgeText').textContent = candidates[sessionNudgeIdx];
+  document.getElementById('nudgeIcon').textContent = isUrgent ? '🔥' : '⚡';
+  el.classList.toggle('nudge-urgent', isUrgent);
   el.style.display = 'flex';
 }
 
