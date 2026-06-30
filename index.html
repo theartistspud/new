@@ -937,7 +937,7 @@ function handleCaptureFiles(event){
     const reader = new FileReader();
     reader.onload = async (e)=>{
       // Compress before storing — keeps images under Firestore's 1MB limit
-      const compressed = await compressImage(e.target.result, 800, 0.7);
+      const compressed = await compressImage(e.target.result, 1100, 0.82);
       const capture = {
         id: 'cap_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
         imageData: compressed,
@@ -1280,16 +1280,26 @@ async function analyseWithAI(id){
   const btn = document.getElementById(`aibtn_${id}`);
   if(btn){ btn.disabled = true; btn.textContent = '✨ Reading image…'; }
 
+  console.log('analyseWithAI — capture before analysis:', {
+    hasImage: !!cap.imageData,
+    sharedText: cap.sharedText,
+    sharedUrl: cap.sharedUrl,
+    currentType: cap.type,
+  });
+
   const projectNames = state.projects
     .filter(p=>(p.progress||0)<100)
     .map(p=>p.name).join(', ');
 
-  const prompt = `You are analysing a shared item for a freelance illustrator named Spud.
+  const prompt = `You are analysing a shared social media post for a freelance illustrator named Spud, to decide if it's a job opportunity, inspiration, reference material, or something else.
+
+IMPORTANT: Read the text content carefully first — captions and post text are usually the strongest signal for whether something is a job posting. Look for phrases like "hiring", "looking for", "DM to apply", "open position", "now accepting", "seeking artist/illustrator", job titles, salary/rate mentions, application instructions, or deadlines to apply. If ANY of these signals are present in the text, classify as "opportunity" even if the image itself just looks like artwork or a generic graphic.
+
 Their active projects are: ${projectNames}.
 
 The shared content is:
-${cap.imageData ? '[Image attached]' : ''}
-${cap.sharedText ? 'Text: ' + cap.sharedText.slice(0, 500) : ''}
+${cap.imageData ? '[Image attached — examine it for job posting graphics, text overlays, or application details]' : ''}
+${cap.sharedText ? 'Post text/caption: "' + cap.sharedText.slice(0, 800) + '"' : ''}
 ${cap.sharedUrl ? 'URL: ' + cap.sharedUrl : ''}
 
 Respond ONLY with a JSON object — no markdown, no explanation:
@@ -1305,11 +1315,11 @@ Respond ONLY with a JSON object — no markdown, no explanation:
 
 Project IDs and names: ${JSON.stringify(state.projects.filter(p=>(p.progress||0)<100).map(p=>({id:p.id,name:p.name})))}
 
-Rules:
-- type = "opportunity" if it shows a job posting, collaboration request, or client opportunity
-- type = "inspiration" if it shows design, art, style, or a visual reference worth saving
-- type = "reference" if it's technical, instructional, or research material
-- type = "misc" if none of the above`;
+Classification rules, in priority order:
+1. type = "opportunity" — ANY job posting, hiring call, collaboration request, commission opportunity, or client work request. This takes priority over everything else, even if the post also contains nice artwork.
+2. type = "inspiration" — design, art, style, or visual reference worth saving for creative inspiration, with NO job/hiring signal in the text.
+3. type = "reference" — technical, instructional, or research material.
+4. type = "misc" — none of the above.`;
 
   try{
     let result = null;
@@ -1363,6 +1373,7 @@ Rules:
     }
 
     // Apply AI suggestions to the capture
+    console.log('analyseWithAI — raw AI result:', result);
     if(result){
       cap.type = result.type || cap.type;
       cap.title = result.title || cap.title;
@@ -1410,37 +1421,41 @@ function fromFS(val){
   return null;
 }
 
+// Helper: race a fetch against a timeout without using AbortSignal —
+// some Android WebView versions can't serialize AbortSignal across the
+// Capacitor bridge ("could not be cloned" postMessage error), so we use
+// Promise.race instead to get the same "give up after N seconds" behavior.
+function fetchWithTimeout(url, options, timeoutMs){
+  return Promise.race([
+    fetch(url, options),
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Request timed out')), timeoutMs)
+    ),
+  ]);
+}
+
 async function fbGet(url){
-  const controller = new AbortController();
-  const timeout = setTimeout(()=>controller.abort(), 8000);
   try{
-    const res = await fetch(`${url}?key=${FB_API_KEY}`, { signal: controller.signal });
-    clearTimeout(timeout);
+    const res = await fetchWithTimeout(`${url}?key=${FB_API_KEY}`, {}, 8000);
     if(res.status===404) return null;
     if(!res.ok) throw new Error(`GET ${res.status}`);
     const data = await res.json();
     if(!data.fields) return null;
     return Object.fromEntries(Object.entries(data.fields).map(([k,v])=>[k,fromFS(v)]));
   }catch(e){
-    clearTimeout(timeout);
     throw e;
   }
 }
 
 async function fbSet(url, obj){
-  const controller = new AbortController();
-  const timeout = setTimeout(()=>controller.abort(), 8000);
   try{
     const fields = Object.fromEntries(Object.entries(obj).map(([k,v])=>[k,toFS(v)]));
-    const res = await fetch(`${url}?key=${FB_API_KEY}`, {
+    const res = await fetchWithTimeout(`${url}?key=${FB_API_KEY}`, {
       method:'PATCH', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({fields}),
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
+    }, 8000);
     if(!res.ok) throw new Error(`SET ${res.status}`);
   }catch(e){
-    clearTimeout(timeout);
     throw e;
   }
 }
@@ -3422,36 +3437,56 @@ async function scheduleLocalNotifications(){
 // ---- Share sheet handler ----
 async function handleIncomingShare(){
   try{
-    if(!window.Capacitor) return;
-    const App = window.Capacitor.Plugins.App;
-    if(!App) return;
-
-    // Handle share data set by MainActivity on launch
+    // Check for share data that arrived before this function ran
+    // (MainActivity injects window.sharedData via evaluateJavascript, which
+    // can fire before our JS has finished initializing on cold start)
     if(window.sharedData){
       await processSharedData(window.sharedData);
       window.sharedData = null;
       return;
     }
-
-    // Legacy single file path support
     if(window.sharedImagePath){
       await processSharedData({ filePath: window.sharedImagePath });
       window.sharedImagePath = null;
       return;
     }
-
-    // Listen for shares while app is already open (onNewIntent)
-    document.addEventListener('shareReceived', async (e)=>{
-      if(e.detail) await processSharedData(e.detail);
-    });
-
   }catch(e){
-    console.warn('Share handler setup failed:', e);
+    console.warn('Share handler check failed:', e);
   }
 }
 
+// Register the share listener immediately at script load time (not inside
+// async init), so it's ready even if MainActivity fires the event early.
+// Also poll briefly on cold start in case window.sharedData gets set by
+// native code microseconds after this script evaluates but before any
+// listener below would have caught a same-tick event.
+document.addEventListener('shareReceived', async (e)=>{
+  if(e.detail) await processSharedData(e.detail);
+});
+
+(function pollForEarlySharedData(){
+  let attempts = 0;
+  const check = setInterval(()=>{
+    attempts++;
+    if(window.sharedData){
+      const data = window.sharedData;
+      window.sharedData = null;
+      clearInterval(check);
+      // state may not be loaded yet this early — wait for it
+      const waitForState = setInterval(()=>{
+        if(typeof state !== 'undefined' && state){
+          clearInterval(waitForState);
+          processSharedData(data);
+        }
+      }, 200);
+    }
+    if(attempts > 15) clearInterval(check); // stop after ~3s
+  }, 200);
+})();
+
 // Processes any combination of image, text, and URL from share intent
 async function processSharedData(data){
+  console.log('processSharedData called with:', data);
   try{
     let imageData = null;
     let sharedText = data.text || '';
@@ -3462,16 +3497,22 @@ async function processSharedData(data){
     if(filePath){
       try{
         const Filesystem = window.Capacitor && window.Capacitor.Plugins.Filesystem;
-        if(Filesystem){
+        if(!Filesystem){
+          console.error('Filesystem plugin not available — cannot read shared image. Check that @capacitor/filesystem is installed and synced.');
+          showShareToast('⚠ Share received but image plugin missing — text-only saved');
+        } else {
           const result = await Filesystem.readFile({ path: filePath });
           const base64 = result.data;
           const ext = (filePath.split('.').pop() || 'jpg').toLowerCase();
           const mimeMap = { jpg:'image/jpeg', jpeg:'image/jpeg', png:'image/png', webp:'image/webp', gif:'image/gif' };
           const mimeType = mimeMap[ext] || 'image/jpeg';
           const raw = 'data:' + mimeType + ';base64,' + base64;
-          imageData = await compressImage(raw, 800, 0.7);
+          imageData = await compressImage(raw, 1100, 0.82);
         }
-      }catch(e){ console.warn('Could not load shared image:', e); }
+      }catch(e){
+        console.error('Could not load shared image:', e);
+        showShareToast('⚠ Couldn\'t load the shared image — saved as text-only');
+      }
     }
 
     // Build a meaningful title from whatever we got
@@ -3499,6 +3540,15 @@ async function processSharedData(data){
     if(!state.captures) state.captures = [];
     state.captures.push(capture);
     await saveState();
+
+    // Close any open modals (Vault grid, capture detail view, analytics
+    // log, etc.) so the newly shared item is actually visible — otherwise
+    // it lands correctly in the inbox but stays hidden behind whatever
+    // modal was open when the share arrived.
+    document.getElementById('vaultModal')?.remove();
+    document.getElementById('captureDetailModal')?.remove();
+    document.getElementById('analyticsModal')?.remove();
+    document.getElementById('blockModal')?.remove();
 
     // Open Captures tab immediately
     switchMainTab('captures');
