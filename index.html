@@ -3264,7 +3264,25 @@ async function scheduleLocalNotifications(){
     }
 
     const notifications = [];
-    let id = 1;
+    // ---- ID range allocation to prevent collisions ----
+    // 1000-1999: work block notifications
+    // 2000-2999: work block wrap-up notifications
+    // 90000-90099: persistent quest notifications (reserved, see below)
+    // 91000-91999: quest mid-day reminders
+    // 92000-92999: one-off task reminders
+    // 93000-93999: recurring (every-other-day) task reminders
+    // 94000-94999: daily task reminders
+    // 95000-95999: opportunity block reminders
+    // 96000-96999: deadline reminders
+    let workId = 1000;
+    let wrapId = 2000;
+    let questMidId = 91000;
+    let taskOneOffId = 92000;
+    let taskRecurId = 93000;
+    let taskDailyId = 94000;
+    let oppId = 95000;
+    let deadlineId = 96000;
+
     const now = new Date();
     const monthMap = { Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11 };
     const blocked = state.blockedSlots || [];
@@ -3308,7 +3326,7 @@ async function scheduleLocalNotifications(){
           .filter(Boolean).join(', ');
 
         notifications.push({
-          id: id++,
+          id: workId++,
           title: `🎨 ${block.label} — time to work`,
           body: projects,
           schedule: { at: new Date(notifDate) },
@@ -3319,7 +3337,7 @@ async function scheduleLocalNotifications(){
         wrapDate.setMinutes(wrapDate.getMinutes() + block.mins - 10);
         if(wrapDate > now){
           notifications.push({
-            id: id++,
+            id: wrapId++,
             title: `⏱ ${block.label} wrapping up`,
             body: `10 mins left — save your work and prep for the next block.`,
             schedule: { at: new Date(wrapDate) },
@@ -3349,7 +3367,7 @@ async function scheduleLocalNotifications(){
       const midday = makeDate(daysAhead, 13, 0);
       if(midday > now){
         notifications.push({
-          id: id++,
+          id: questMidId++,
           title: `📱 Social quests — still pending`,
           body: `Haven't posted yet? Takes 5 mins — captions are ready to copy.`,
           schedule: { at: new Date(midday) },
@@ -3361,7 +3379,7 @@ async function scheduleLocalNotifications(){
     const tomorrow9 = makeDate(1, 9, 0);
     state.tasks.filter(t=>!t.done && t.freq==='One-off').forEach(t=>{
       if(tomorrow9 > now){
-        notifications.push({ id:id++, title:'📋 Task reminder', body:t.text, schedule:{ at: new Date(tomorrow9) } });
+        notifications.push({ id:taskOneOffId++, title:'📋 Task reminder', body:t.text, schedule:{ at: new Date(tomorrow9) } });
         tomorrow9.setMinutes(tomorrow9.getMinutes()+3); // stagger
       }
     });
@@ -3371,7 +3389,7 @@ async function scheduleLocalNotifications(){
       for(let d=0; d<14; d+=2){
         const notifDate = makeDate(d, 18, 0);
         if(notifDate > now){
-          notifications.push({ id:id++, title:'📋 Recurring task', body:t.text, schedule:{ at: new Date(notifDate) } });
+          notifications.push({ id:taskRecurId++, title:'📋 Recurring task', body:t.text, schedule:{ at: new Date(notifDate) } });
         }
       }
     });
@@ -3381,7 +3399,7 @@ async function scheduleLocalNotifications(){
       for(let d=0; d<7; d++){
         const notifDate = makeDate(d, 8, 0);
         if(notifDate > now){
-          notifications.push({ id:id++, title:'📋 Daily task', body:t.text, schedule:{ at: new Date(notifDate) } });
+          notifications.push({ id:taskDailyId++, title:'📋 Daily task', body:t.text, schedule:{ at: new Date(notifDate) } });
         }
       }
     });
@@ -3391,7 +3409,7 @@ async function scheduleLocalNotifications(){
       const notifDate = makeDate(1, 9, 30);
       if(notifDate > now){
         notifications.push({
-          id: id++,
+          id: oppId++,
           title: '💼 Portfolio opportunity — time to send',
           body: `${opp.title}${opp.deadline?' (deadline: '+opp.deadline+')':''}`,
           schedule: { at: new Date(notifDate) },
@@ -3408,12 +3426,20 @@ async function scheduleLocalNotifications(){
       let dueDate = new Date(year, monthMap[m[1]], parseInt(m[2]), 9, 0, 0);
       if(dueDate < now) dueDate.setFullYear(year+1);
       const dayBefore = new Date(dueDate.getTime() - 86400000);
-      if(dayBefore > now) notifications.push({ id:id++, title:'⚠ Deadline tomorrow', body:`${p.name} is due tomorrow.`, schedule:{ at: dayBefore } });
-      if(dueDate > now) notifications.push({ id:id++, title:'🔴 Deadline today', body:`${p.name} is due today — finish it up!`, schedule:{ at: dueDate } });
+      if(dayBefore > now) notifications.push({ id:deadlineId++, title:'⚠ Deadline tomorrow', body:`${p.name} is due tomorrow.`, schedule:{ at: dayBefore } });
+      if(dueDate > now) notifications.push({ id:deadlineId++, title:'🔴 Deadline today', body:`${p.name} is due today — finish it up!`, schedule:{ at: dueDate } });
     });
 
-    if(notifications.length) await LN.schedule({ notifications });
-    console.log(`Scheduled ${notifications.length} notifications automatically.`);
+    // Android caps pending alarms around 500 — guard against runaway growth
+    if(notifications.length > 450){
+      console.warn(`Notification count (${notifications.length}) is high — trimming to most recent 450.`);
+      notifications.length = 450;
+    }
+
+    if(notifications.length){
+      await LN.schedule({ notifications });
+    }
+    console.log(`✓ Scheduled ${notifications.length} notifications (work blocks: ${workId-1000}, wrap-ups: ${wrapId-2000}).`);
   }catch(e){
     console.error('Notification scheduling failed:', e);
   }
