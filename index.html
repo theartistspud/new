@@ -399,6 +399,35 @@
   .sblock-time{ font-size:11px; color:var(--text-faint); font-weight:700; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px; }
   .today-block{ border-color:var(--own) !important; box-shadow:0 0 0 1px rgba(155,140,255,0.2); }
 
+  /* ---- Active block start banner ---- */
+  .active-block-banner{
+    background:linear-gradient(135deg, rgba(155,140,255,0.18), rgba(155,140,255,0.06));
+    border:1.5px solid rgba(155,140,255,0.5);
+    border-radius:var(--radius); padding:14px 16px;
+    margin-bottom:16px; display:flex; align-items:center; gap:12px;
+  }
+  .active-block-banner .abl-ico{ font-size:22px; flex-shrink:0; }
+  .active-block-banner .abl-info{ flex:1; }
+  .active-block-banner .abl-label{ font-size:13px; font-weight:700; color:var(--own); }
+  .active-block-banner .abl-projects{ font-size:12px; color:var(--text-dim); margin-top:2px; }
+  .btn-start-block{
+    background:var(--own); color:#16151A; border:none;
+    border-radius:10px; padding:10px 16px; font-size:13px;
+    font-weight:800; cursor:pointer; white-space:nowrap;
+    display:flex; align-items:center; gap:6px;
+    box-shadow:0 2px 12px rgba(155,140,255,0.4);
+    animation:pulse-start 2s ease-in-out infinite;
+  }
+  @keyframes pulse-start{
+    0%,100%{ box-shadow:0 2px 12px rgba(155,140,255,0.4); }
+    50%{ box-shadow:0 2px 20px rgba(155,140,255,0.7); }
+  }
+  .block-started-badge{
+    font-size:12px; font-weight:700; color:var(--biz);
+    background:rgba(74,189,172,0.12); border:1px solid rgba(74,189,172,0.3);
+    border-radius:20px; padding:6px 12px; white-space:nowrap;
+  }
+
   /* ---- Daily Quest cards ---- */
   .quest-card{
     background:var(--panel); border:1px solid var(--line);
@@ -561,6 +590,8 @@
 
   <div class="label">Reminders & one-off tasks</div>
   <div class="tasks" id="tasks"></div>
+
+  <div id="activeBlockBanner"></div>
 
   <div class="label">Today's schedule — based on your priorities</div>
   <div class="schedule" id="schedule"></div>
@@ -1052,19 +1083,48 @@ function setCaptureType(id, type, btn){
   const cap = (state.captures||[]).find(c=>c.id===id);
   if(!cap) return;
   cap.type = type;
-  // Update chip UI
+  // Update chip UI without re-rendering the whole inbox (which would reset the select)
   const card = document.getElementById(`cap_${id}`);
   if(card){
     card.querySelectorAll('.inbox-type-chip').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
-    // Show/hide opportunity fields by re-rendering
-    renderCapturesInbox();
+    // Show/hide opportunity-specific fields without full re-render
+    const oppFields = card.querySelector('.opp-fields');
+    if(type === 'opportunity'){
+      if(!oppFields){
+        const sourceInput = document.createElement('input');
+        sourceInput.className = 'inbox-card-input';
+        sourceInput.type = 'text';
+        sourceInput.placeholder = 'Source / link (optional)';
+        sourceInput.value = cap.source || '';
+        sourceInput.onchange = (e)=>updateCaptureField(id,'source',e.target.value);
+        const deadlineInput = document.createElement('input');
+        deadlineInput.className = 'inbox-card-input';
+        deadlineInput.type = 'text';
+        deadlineInput.placeholder = 'Deadline to apply (e.g. Jul 10)';
+        deadlineInput.value = cap.deadline || '';
+        deadlineInput.onchange = (e)=>updateCaptureField(id,'deadline',e.target.value);
+        const wrap = document.createElement('div');
+        wrap.className = 'opp-fields';
+        wrap.style.display = 'flex';
+        wrap.style.flexDirection = 'column';
+        wrap.style.gap = '8px';
+        wrap.appendChild(sourceInput);
+        wrap.appendChild(deadlineInput);
+        // Insert before the project select
+        const projSelect = card.querySelector('.inbox-project-select')?.parentElement;
+        if(projSelect) card.querySelector('.inbox-card-body').insertBefore(wrap, projSelect);
+      }
+    } else {
+      oppFields?.remove();
+    }
   }
 }
 
 function updateCaptureField(id, field, value){
   const cap = (state.captures||[]).find(c=>c.id===id);
   if(cap) cap[field] = value;
+  // Don't save state on every keystroke — confirmCapture will save when user taps Save
 }
 
 async function confirmCapture(id){
@@ -1291,35 +1351,38 @@ async function analyseWithAI(id){
     .filter(p=>(p.progress||0)<100)
     .map(p=>p.name).join(', ');
 
-  const prompt = `You are analysing a shared social media post for a freelance illustrator named Spud, to decide if it's a job opportunity, inspiration, reference material, or something else.
+  const hasImage = !!cap.imageData;
+  const hasText = !!cap.sharedText;
 
-IMPORTANT: Read the text content carefully first — captions and post text are usually the strongest signal for whether something is a job posting. Look for phrases like "hiring", "looking for", "DM to apply", "open position", "now accepting", "seeking artist/illustrator", job titles, salary/rate mentions, application instructions, or deadlines to apply. If ANY of these signals are present in the text, classify as "opportunity" even if the image itself just looks like artwork or a generic graphic.
+  const prompt = `You are classifying a shared social media post. Your FIRST and MOST IMPORTANT task is:
 
-Their active projects are: ${projectNames}.
+${hasImage ? `STEP 1 — READ THE IMAGE: Look carefully at ALL text visible in the attached image. Instagram job posts are typically graphic images with large text like "WE ARE HIRING", "OPEN ROLE", "NOW HIRING", "APPLY NOW", job titles, role descriptions, work type (hybrid/remote/onsite), contact details, and "APPLY" calls-to-action. If you can see ANY of this in the image, classify as "opportunity" immediately.` : ''}
 
-The shared content is:
-${cap.imageData ? '[Image attached — examine it for job posting graphics, text overlays, or application details]' : ''}
-${cap.sharedText ? 'Post text/caption: "' + cap.sharedText.slice(0, 800) + '"' : ''}
+${hasText ? `STEP 1 — READ THE CAPTION: "${cap.sharedText.slice(0,800)}"` : ''}
+
+STEP 2 — CLASSIFY using ONLY these rules in priority order:
+1. "opportunity" — the post is hiring someone, looking for a freelancer/collaborator, or soliciting applications/portfolios. Signals: "hiring", "we are hiring", "open role", "looking for", "apply", "DM us", "send your portfolio", job title, work type (hybrid/remote), salary/rate. **CLASSIFY AS OPPORTUNITY IF ANY OF THESE ARE PRESENT.**
+2. "inspiration" — purely aesthetic or creative content with ZERO hiring signals.
+3. "reference" — educational, technical, or instructional content.
+4. "misc" — nothing else fits.
+
+The poster is a freelance illustrator. Active projects: ${projectNames}.
 ${cap.sharedUrl ? 'URL: ' + cap.sharedUrl : ''}
 
-Respond ONLY with a JSON object — no markdown, no explanation:
+Respond ONLY with valid JSON, no markdown:
 {
-  "type": "inspiration|reference|opportunity|misc",
-  "title": "short descriptive title (max 8 words)",
-  "projectId": "best matching project id or 'general'",
-  "projectName": "name of matched project or 'General Vault'",
-  "source": "source URL or company/platform name if visible, else empty string",
-  "deadline": "deadline date if visible (e.g. Jul 10), else empty string",
-  "summary": "1-2 sentence description of what this is and why it's relevant to Spud"
+  "type": "opportunity",
+  "title": "short title describing the role or opportunity (max 8 words)",
+  "projectId": "general",
+  "projectName": "General Vault",
+  "source": "company or account name if visible, else empty string",
+  "deadline": "application deadline if visible, else empty string",
+  "summary": "1-2 sentences: what role, what company, what they need"
 }
 
-Project IDs and names: ${JSON.stringify(state.projects.filter(p=>(p.progress||0)<100).map(p=>({id:p.id,name:p.name})))}
+Project IDs available: ${JSON.stringify(state.projects.filter(p=>(p.progress||0)<100).map(p=>({id:p.id,name:p.name})))}
 
-Classification rules, in priority order:
-1. type = "opportunity" — ANY job posting, hiring call, collaboration request, commission opportunity, or client work request. This takes priority over everything else, even if the post also contains nice artwork.
-2. type = "inspiration" — design, art, style, or visual reference worth saving for creative inspiration, with NO job/hiring signal in the text.
-3. type = "reference" — technical, instructional, or research material.
-4. type = "misc" — none of the above.`;
+Replace the template values above with actual values from the content. The "type" field must be one of: opportunity, inspiration, reference, misc.`;
 
   try{
     let result = null;
@@ -1382,7 +1445,28 @@ Classification rules, in priority order:
       cap.deadline = result.deadline || '';
       cap.aiSuggestion = `${result.type} · "${result.title}" → ${result.projectName}. ${result.summary}`;
       await saveState();
-      renderCapturesInbox();
+
+      // Update just this card's UI in place — avoid full re-render which
+      // would wipe any type/project changes the user already made manually
+      const card = document.getElementById(`cap_${id}`);
+      if(card){
+        // Update type chips
+        card.querySelectorAll('.inbox-type-chip').forEach(b=>{
+          b.classList.toggle('active', b.textContent.toLowerCase().includes(cap.type));
+        });
+        // Update AI suggestion banner if it exists, or insert one
+        let banner = card.querySelector('.ai-suggestion-banner');
+        if(!banner){
+          banner = document.createElement('div');
+          banner.className = 'ai-suggestion-banner';
+          const body = card.querySelector('.inbox-card-body');
+          if(body) body.insertBefore(banner, body.firstChild);
+        }
+        banner.innerHTML = `<strong>✨ AI read:</strong> ${cap.aiSuggestion}`;
+        // Update project select value to match AI suggestion
+        const sel = card.querySelector('.inbox-project-select');
+        if(sel) sel.value = cap.projectId;
+      }
     }
 
   }catch(err){
@@ -1504,6 +1588,7 @@ const DEFAULT_STATE = {
   ],
   schedule: [],
   captures: [],
+  startedBlocks: [],
   dailyQuests: null,
   questHistory: [],
   analyticsLog: [],
@@ -1523,11 +1608,13 @@ function setSyncStatus(msg, color='var(--text-faint)'){
 }
 
 async function loadState(){
+  let isLocalDataMissing = false;
   // Load localStorage immediately so app renders without waiting for Firestore
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
     if(raw) state = JSON.parse(raw);
-  }catch(e){}
+    else isLocalDataMissing = true;
+  }catch(e){ isLocalDataMissing = true; }
 
   if(!state) state = JSON.parse(JSON.stringify(DEFAULT_STATE));
   DEFAULT_STATE.projects.forEach(def=>{
@@ -1553,9 +1640,19 @@ async function loadState(){
         renderWeek(); renderNudge(); populateProjectSelects();
         renderArchive(); updateCapturesBadge();
         setSyncStatus('✓ Synced', 'var(--biz)');
-      } else {
+      } else if(isLocalDataMissing){
+        // SAFETY: local storage was empty (fresh install / data cleared) AND
+        // Firestore has no existing data either — this really is a brand
+        // new setup, safe to push the default seed state.
         await fbSet(FB_STATE_URL, state);
         setSyncStatus('✓ Synced', 'var(--biz)');
+      } else {
+        // Local data exists but Firestore came back empty — do NOT push,
+        // since this could be a transient read failure and pushing would
+        // permanently overwrite real cloud data with possibly-stale local
+        // data. Just warn and leave Firestore untouched until next sync.
+        console.warn('Firestore returned no data but local state exists — skipping push to avoid data loss. Will retry on next sync.');
+        setSyncStatus('⚠ Could not confirm sync', '#FFC857');
       }
       if(unsubscribe) clearInterval(unsubscribe);
       unsubscribe = setInterval(async()=>{
@@ -1716,6 +1813,94 @@ function generateWeeklySchedule(){
   });
 
   return schedule;
+}
+
+// ---- Active block banner + Started button ----
+function getCurrentBlock(){
+  const now = new Date();
+  const currentMins = now.getHours() * 60 + now.getMinutes();
+  const todayName = DAYS[(now.getDay() + 6) % 7];
+  const schedule = generateWeeklySchedule();
+
+  for(const block of WORK_BLOCKS){
+    let startMins = block.startH * 60 + block.startM;
+    let endMins = block.endH * 60 + block.endM;
+    if(block.startH >= 24) startMins -= 24 * 60;
+    if(block.endH >= 24) endMins -= 24 * 60;
+
+    const inBlock = currentMins >= startMins && currentMins < endMins;
+    if(!inBlock) continue;
+
+    const slots = schedule.filter(s=>s.day===todayName && s.blockId===block.id);
+    if(slots.length === 0) continue;
+
+    const projects = slots
+      .map(s=>{ const p=state.projects.find(pr=>pr.id===s.projectId); return p?p.name:null; })
+      .filter(Boolean).join(', ');
+
+    return { block, projects, todayName };
+  }
+  return null;
+}
+
+function renderActiveBlockBanner(){
+  const wrap = document.getElementById('activeBlockBanner');
+  if(!wrap) return;
+
+  const active = getCurrentBlock();
+  if(!active){ wrap.innerHTML = ''; return; }
+
+  const { block, projects, todayName } = active;
+  const blockKey = todayName + '_' + block.id;
+  const started = (state.startedBlocks||[]).includes(blockKey);
+
+  wrap.innerHTML = `<div class="active-block-banner">
+    <div class="abl-ico">${started ? '✅' : '🎨'}</div>
+    <div class="abl-info">
+      <div class="abl-label">${block.label} — active now</div>
+      <div class="abl-projects">${projects}</div>
+    </div>
+    ${started
+      ? `<div class="block-started-badge">✓ Started</div>`
+      : `<button class="btn-start-block" onclick="startBlock('${block.id}','${todayName}')">▶ Started</button>`
+    }
+  </div>`;
+}
+
+async function startBlock(blockId, dayName){
+  const LN = window.Capacitor?.Plugins?.LocalNotifications;
+
+  // Mark as started in state
+  if(!state.startedBlocks) state.startedBlocks = [];
+  const blockKey = dayName + '_' + blockId;
+  if(!state.startedBlocks.includes(blockKey)){
+    state.startedBlocks.push(blockKey);
+    // Auto-clear started marks at midnight so tomorrow's blocks aren't pre-marked
+    const today = new Date().toISOString().slice(0,10);
+    if(state.startedBlocksDate !== today){
+      state.startedBlocks = [blockKey];
+      state.startedBlocksDate = today;
+    }
+  }
+
+  // Cancel the matching pending work block notification
+  if(LN){
+    try{
+      const pending = await LN.getPending();
+      // Work block notification IDs are in range 1000-1999
+      // Cancel all work block notifications for this block that are still pending
+      // (i.e. the reminder that just fired — if ongoing it won't be in pending,
+      // so we also cancel by checking the delivered notifications where supported)
+      const toCancel = pending.notifications
+        .filter(n => n.id >= 1000 && n.id < 2000)
+        .map(n => ({ id: n.id }));
+      if(toCancel.length) await LN.cancel({ notifications: toCancel });
+    }catch(e){ console.warn('Could not cancel notification:', e); }
+  }
+
+  await saveState();
+  renderActiveBlockBanner();
+  showFeedback(`✓ ${blockId} block started — focus up!`);
 }
 
 function renderSchedule(){
@@ -3072,7 +3257,12 @@ function populateProjectSelects(){
   ['statusProject'].forEach(id=>{
     const sel = document.getElementById(id);
     if(!sel) return;
-    sel.innerHTML = state.projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+    const activeProjects = state.projects.filter(p=>(p.progress||0) < 100);
+    if(activeProjects.length === 0){
+      sel.innerHTML = `<option value="">No active projects — add one below</option>`;
+      return;
+    }
+    sel.innerHTML = activeProjects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
     // Pre-fill form when selection changes
     if(id === 'statusProject'){
       sel.onchange = ()=>{
@@ -3203,10 +3393,14 @@ function updateChatVisibility(){
   updateChatVisibility();
   renderArchive();
   updateCapturesBadge();
+  renderActiveBlockBanner();
   generateDailyQuests(false);
   renderAnalyticsPanel();
   renderVideoIdeaPanel();
   await saveState();
+
+  // Refresh active block banner every minute so it auto-appears when a block starts
+  setInterval(renderActiveBlockBanner, 60000);
 
   // Register service worker for offline/PWA support (web fallback only)
   if('serviceWorker' in navigator && !window.Capacitor){
@@ -3314,11 +3508,16 @@ async function scheduleLocalNotifications(){
           .map(s=>{ const p=state.projects.find(pr=>pr.id===s.projectId); return p?`${p.name} (${fmtMins(s.durationMins)})`:null; })
           .filter(Boolean).join(', ');
 
+        const notifId = workId++;
         notifications.push({
-          id: workId++,
+          id: notifId,
           title: `🎨 ${block.label} — time to work`,
-          body: projects,
+          body: `${projects} · Tap to open, then press Started to dismiss`,
           schedule: { at: new Date(notifDate) },
+          ongoing: true,
+          autoCancel: false,
+          channelId: 'work_block',
+          extra: { blockId: block.id, dayName, notifId },
         });
 
         // 10-min wrap-up
