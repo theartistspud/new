@@ -24,127 +24,151 @@
     --danger:#E24B4A;
     --success:#1DB954;
     --radius:14px;
+    --card-shadow: 0 2px 8px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.2);
   }
   *{box-sizing:border-box; margin:0; padding:0;}
+  @media (prefers-reduced-motion: reduce){ *, *::before, *::after{ animation:none !important; transition:none !important; } }
 
-  /* ---- Unified button system — every primary/secondary/danger action uses these ---- */
+  /* ---- Unified button system ---- */
   .btn{
     border:none; border-radius:10px; font-weight:700; cursor:pointer;
     font-family:inherit; transition:opacity .15s, transform .1s;
     display:inline-flex; align-items:center; justify-content:center; gap:6px;
   }
-  .btn:active{ transform:scale(0.98); }
+  .btn:active{ transform:scale(0.97); opacity:0.85; }
   .btn:disabled{ opacity:0.4; cursor:default; transform:none; }
-  .btn-primary{ background:var(--own); color:#16151A; padding:12px 16px; font-size:14px; }
+  .btn-primary{ background:var(--own); color:#16151A; padding:12px 18px; font-size:14px; }
   .btn-primary-sm{ background:var(--own); color:#16151A; padding:9px 14px; font-size:12px; border-radius:9px; }
   .btn-secondary{ background:transparent; color:var(--text-dim); border:1px solid var(--line); padding:11px 16px; font-size:13px; }
   .btn-secondary-sm{ background:transparent; color:var(--text-dim); border:1px solid var(--line); padding:8px 12px; font-size:12px; border-radius:9px; }
   .btn-outline{ background:transparent; color:var(--own); border:1px solid var(--own); padding:11px 16px; font-size:13px; }
-  .btn-success{ background:var(--success); color:#fff; padding:12px 16px; font-size:14px; }
+  .btn-success{ background:var(--success); color:#fff; padding:12px 18px; font-size:14px; }
   .btn-danger-outline{ background:transparent; color:var(--danger); border:1px solid var(--danger); padding:11px 16px; font-size:13px; }
   .btn-ghost{ background:transparent; color:var(--text-faint); padding:10px 14px; font-size:13px; }
   .btn-full{ width:100%; }
   .btn-pill{ border-radius:20px; }
+
   body{
     font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
     background:var(--bg);
     color:var(--text);
-    padding:24px 16px 60px;
+    padding:20px 16px 72px;
     max-width:760px;
     margin:0 auto;
     -webkit-font-smoothing:antialiased;
   }
+
+  /* ---- Header ---- */
   .top{
     display:flex; justify-content:space-between; align-items:flex-end;
     margin-bottom:22px;
   }
   .top h1{
-    font-size:22px; font-weight:700; letter-spacing:-0.02em;
+    font-size:20px; font-weight:700; letter-spacing:-0.02em; line-height:1.2;
   }
-  .top .sub{ color:var(--text-dim); font-size:13px; margin-top:2px; }
-  .top .date{ color:var(--text-faint); font-size:12px; text-align:right; }
+  .top .sub{ color:var(--text-faint); font-size:12px; margin-top:3px; }
+  .top .date{ color:var(--text-faint); font-size:11px; text-align:right; line-height:1.5; }
 
+  /* ---- Nudge banner ---- */
   .nudge{
-    background:linear-gradient(135deg, rgba(255,200,87,0.12), rgba(255,200,87,0.04));
-    border:1px solid rgba(255,200,87,0.25);
+    background:linear-gradient(135deg, rgba(255,200,87,0.1), rgba(255,200,87,0.03));
+    border:1px solid rgba(255,200,87,0.2);
     border-radius:var(--radius);
-    padding:12px 16px;
-    font-size:13px;
+    padding:12px 14px;
+    font-size:13px; line-height:1.5;
     color:#FFE0A3;
-    margin-bottom:20px;
+    margin-bottom:24px;
     display:flex; gap:10px; align-items:flex-start;
   }
-  .nudge .ico{ font-size:15px; line-height:1.3; }
+  .nudge .ico{ font-size:15px; line-height:1.4; flex-shrink:0; }
   .nudge-urgent{
-    background:linear-gradient(135deg, rgba(226,75,74,0.16), rgba(226,75,74,0.05)) !important;
-    border:1px solid rgba(226,75,74,0.4) !important;
+    background:linear-gradient(135deg, rgba(226,75,74,0.14), rgba(226,75,74,0.04)) !important;
+    border:1px solid rgba(226,75,74,0.35) !important;
     color:#FF9D9C !important;
-    box-shadow:0 0 0 1px rgba(226,75,74,0.1), 0 4px 16px rgba(226,75,74,0.08);
+    box-shadow:0 0 0 1px rgba(226,75,74,0.08), 0 4px 16px rgba(226,75,74,0.06);
   }
   .nudge-urgent .ico{ animation:pulse-urgent 2s ease-in-out infinite; }
-  @keyframes pulse-urgent{ 0%,100%{ opacity:1; } 50%{ opacity:0.5; } }
+  @keyframes pulse-urgent{ 0%,100%{ opacity:1; } 50%{ opacity:0.4; } }
 
+  /* ---- Section labels ---- */
   .label{
-    font-size:11px; font-weight:700; text-transform:uppercase;
-    letter-spacing:0.12em; color:var(--text-faint);
-    margin:24px 0 10px;
+    font-size:12px; font-weight:700;
+    letter-spacing:0.04em; color:var(--text-faint);
+    margin:28px 0 12px;
+    padding-left:10px;
+    border-left:2px solid var(--own);
+    line-height:1;
   }
   .label:first-of-type{ margin-top:0; }
 
-  .week{ display:flex; gap:6px; margin-bottom:4px; }
+  /* ---- Week bar ---- */
+  .week{ display:flex; gap:5px; margin-bottom:4px; }
   .week .day{ flex:1; text-align:center; }
   .week .dlabel{ font-size:10px; color:var(--text-faint); text-transform:uppercase; margin-bottom:5px; }
-  .week .dbar{ height:34px; border-radius:6px; background:var(--panel-2); position:relative; overflow:hidden; border:1px solid var(--line); }
-  .week .dbar.today{ border-color:var(--own); }
-  .week .dfill{ position:absolute; bottom:0; left:0; right:0; border-radius:0 0 6px 6px; }
+  .week .dbar{ height:36px; border-radius:7px; background:var(--panel-2); position:relative; overflow:hidden; border:1px solid var(--line); }
+  .week .dbar.today{ border-color:var(--own); box-shadow:0 0 0 1px rgba(155,140,255,0.15); }
+  .week .dfill{ position:absolute; bottom:0; left:0; right:0; border-radius:0 0 7px 7px; }
 
-  .projects{ display:flex; flex-direction:column; gap:8px; }
+  /* ---- Project cards ---- */
+  .projects{ display:flex; flex-direction:column; gap:10px; }
   .pcard{
     background:var(--panel);
     border:1px solid var(--line);
     border-radius:var(--radius);
-    padding:14px 16px;
+    padding:16px;
     cursor:pointer;
-    transition:border-color .15s, transform .1s;
+    box-shadow:var(--card-shadow);
+    transition:border-color .15s, transform .1s, box-shadow .15s;
   }
-  .pcard:active{ transform:scale(0.997); }
+  .pcard:active{ transform:scale(0.997); box-shadow:none; }
   .pcard:hover{ border-color:#454351; }
   .prow1{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:8px; }
-  .pname{ font-size:14px; font-weight:600; }
-  .pmeta{ font-size:11px; color:var(--text-faint); margin-top:2px; }
-  .ptag{ font-size:10px; font-weight:700; padding:3px 8px; border-radius:20px; white-space:nowrap; text-transform:uppercase; letter-spacing:0.05em; }
+  .pname{ font-size:15px; font-weight:600; line-height:1.3; }
+  .pmeta{ font-size:11px; color:var(--text-faint); margin-top:3px; line-height:1.4; }
+  .ptag{ font-size:10px; font-weight:700; padding:3px 9px; border-radius:20px; white-space:nowrap; letter-spacing:0.04em; flex-shrink:0; }
   .ptag.client{ background:rgba(255,138,92,0.15); color:var(--client); }
   .ptag.own{ background:rgba(155,140,255,0.15); color:var(--own); }
   .ptag.biz{ background:rgba(74,189,172,0.15); color:var(--biz); }
-  .pcard.p1{ border-color:var(--client); box-shadow:0 0 0 1px rgba(255,138,92,0.15); }
-  .prio{ font-size:10px; font-weight:800; letter-spacing:0.08em; color:var(--text-faint); margin-bottom:6px; text-transform:uppercase; }
+  .pcard.p1{
+    border-color:rgba(255,138,92,0.4);
+    box-shadow:0 2px 12px rgba(255,138,92,0.1), 0 1px 3px rgba(0,0,0,0.3);
+  }
+  .prio{ font-size:10px; font-weight:800; letter-spacing:0.06em; color:var(--text-faint); margin-bottom:6px; text-transform:uppercase; }
   .prio.p1{ color:var(--client); }
   .prio.p2{ color:var(--own); }
 
-  .pbar-bg{ height:5px; background:var(--panel-2); border-radius:3px; overflow:hidden; margin-bottom:6px; }
-  .pbar-fill{ height:100%; border-radius:3px; transition:width .3s; }
+  .pbar-bg{ height:6px; background:var(--panel-2); border-radius:4px; overflow:hidden; margin-bottom:8px; }
+  .pbar-fill{ height:100%; border-radius:4px; transition:width .4s cubic-bezier(.4,0,.2,1); }
   .pfoot{ display:flex; justify-content:space-between; font-size:11px; color:var(--text-dim); }
 
-  .tasks{ display:flex; flex-direction:column; gap:0; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; }
-  .task{ display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid var(--line); cursor:pointer; }
+  /* ---- Tasks ---- */
+  .tasks{ display:flex; flex-direction:column; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; box-shadow:var(--card-shadow); }
+  .task{ display:flex; align-items:center; gap:12px; padding:13px 16px; border-bottom:1px solid var(--line); cursor:pointer; transition:background .1s; }
   .task:last-child{ border-bottom:none; }
   .task:hover{ background:var(--panel-2); }
-  .tcheck{ width:18px; height:18px; border-radius:5px; border:1.5px solid var(--text-faint); flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+  .tcheck{
+    width:20px; height:20px; border-radius:6px;
+    border:1.5px solid var(--text-faint);
+    flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    transition:all .15s;
+  }
   .tcheck.done{ background:var(--own); border-color:var(--own); }
   .tcheck.done::after{ content:"✓"; color:#16151A; font-size:11px; font-weight:900; }
-  .ttext{ font-size:13px; flex:1; }
+  .ttext{ font-size:13px; flex:1; line-height:1.4; }
   .ttext.done{ text-decoration:line-through; color:var(--text-faint); }
-  .tfreq{ font-size:11px; color:var(--text-faint); white-space:nowrap; }
+  .tfreq{ font-size:11px; color:var(--text-faint); white-space:nowrap; background:var(--panel-2); padding:2px 8px; border-radius:20px; }
 
-  .cal-list{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:6px 16px; }
-  .citem{ display:flex; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); align-items:flex-start; }
+  /* ---- Calendar ---- */
+  .cal-list{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:6px 16px; box-shadow:var(--card-shadow); }
+  .citem{ display:flex; gap:12px; padding:11px 0; border-bottom:1px solid var(--line); align-items:flex-start; }
   .citem:last-child{ border-bottom:none; }
   .cdot{ width:8px; height:8px; border-radius:50%; margin-top:5px; flex-shrink:0; }
-  .ctitle{ font-size:13px; }
-  .ctime{ font-size:11px; color:var(--text-faint); margin-top:1px; }
+  .ctitle{ font-size:13px; line-height:1.4; }
+  .ctime{ font-size:11px; color:var(--text-faint); margin-top:2px; }
   .cempty{ padding:14px 0; font-size:13px; color:var(--text-dim); }
 
-  .chat{ border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; background:var(--panel); }
+  /* ---- Chat ---- */
+  .chat{ border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; background:var(--panel); box-shadow:var(--card-shadow); }
   .messages{ max-height:280px; overflow-y:auto; padding:14px 16px; display:flex; flex-direction:column; gap:8px; min-height:80px; }
   .msg{ max-width:85%; padding:9px 13px; border-radius:14px; font-size:13px; line-height:1.5; }
   .msg.assistant{ background:var(--panel-2); align-self:flex-start; border-bottom-left-radius:4px; }
@@ -163,48 +187,52 @@
   .input-row button:hover{ background:var(--panel-2); }
   .input-row button:disabled{ opacity:0.4; cursor:default; }
   .mic-btn{
-    border-left:1px solid var(--line);
     background:transparent; border:none; border-right:1px solid var(--line);
     width:44px; flex-shrink:0; cursor:pointer; font-size:16px;
     display:flex; align-items:center; justify-content:center;
     color:var(--text-dim); transition:color .15s, background .15s;
   }
   .mic-btn:hover{ background:var(--panel-2); color:var(--text); }
-  .mic-btn.listening{ color:#FF8A5C; animation:pulse 1s infinite; }
+  .mic-btn.listening{ color:var(--client); animation:pulse 1s infinite; }
   @keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.4; } }
 
-  ::-webkit-scrollbar{ width:6px; }
+  ::-webkit-scrollbar{ width:5px; }
   ::-webkit-scrollbar-thumb{ background:var(--line); border-radius:3px; }
 
-  /* ---- Main tab bar ---- */
+  /* ---- Main tab bar — redesigned ---- */
   .main-tab-bar{
-    display:flex; gap:6px;
+    display:flex; gap:4px;
     background:var(--panel);
     border:1px solid var(--line);
-    border-radius:var(--radius);
-    padding:5px;
-    margin-bottom:20px;
-    position:sticky; top:0; z-index:100;
+    border-radius:16px;
+    padding:4px;
+    margin-bottom:24px;
+    position:sticky; top:8px; z-index:100;
+    box-shadow:0 4px 20px rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.03) inset;
   }
   .main-tab-btn{
     flex:1; display:flex; align-items:center; justify-content:center; gap:5px;
-    padding:10px 4px; border:none; border-radius:10px;
-    background:transparent; color:var(--text-dim);
+    padding:11px 4px; border:none; border-radius:12px;
+    background:transparent; color:var(--text-faint);
     font-size:12px; font-weight:600; cursor:pointer;
-    transition:all .15s; position:relative; white-space:nowrap;
+    transition:all .18s cubic-bezier(.4,0,.2,1);
+    position:relative; white-space:nowrap;
   }
   .main-tab-btn.active{
-    background:var(--panel-2); color:var(--text);
+    background:var(--panel-2);
+    color:var(--text);
+    box-shadow:0 0 0 1px rgba(155,140,255,0.25), 0 1px 8px rgba(155,140,255,0.12);
   }
   .main-tab-badge{
-    display:none; position:absolute; top:6px; right:10px;
-    background:#E24B4A; color:#fff;
-    font-size:10px; font-weight:800;
-    width:17px; height:17px; border-radius:50%;
+    display:none; position:absolute; top:5px; right:8px;
+    background:var(--danger); color:#fff;
+    font-size:9px; font-weight:800;
+    width:16px; height:16px; border-radius:50%;
     align-items:center; justify-content:center;
     line-height:1;
   }
   .main-tab-badge.visible{ display:flex; }
+
 
   /* ---- Captures tab shell ---- */
   #tabCaptures{ display:none; }
@@ -212,59 +240,54 @@
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     gap:14px; padding:60px 20px; text-align:center;
   }
-  .captures-empty .ico{ font-size:48px; opacity:0.3; }
-  .captures-empty .title{ font-size:16px; font-weight:600; color:var(--text-dim); }
-  .captures-empty .sub{ font-size:13px; color:var(--text-faint); line-height:1.6; max-width:280px; }
+  .captures-empty .ico{ font-size:44px; opacity:0.25; }
+  .captures-empty .title{ font-size:15px; font-weight:600; color:var(--text-dim); }
+  .captures-empty .sub{ font-size:13px; color:var(--text-faint); line-height:1.6; max-width:260px; }
   .captures-section-label{
     font-size:11px; font-weight:700; text-transform:uppercase;
-    letter-spacing:0.1em; color:var(--text-faint); margin:20px 0 10px;
+    letter-spacing:0.08em; color:var(--text-faint); margin:20px 0 10px;
   }
   .captures-inbox-empty{
-    background:var(--panel); border:1.5px dashed var(--line);
-    border-radius:var(--radius); padding:24px 16px;
-    text-align:center; font-size:13px; color:var(--text-faint);
+    background:var(--panel); border:1.5px dashed rgba(155,140,255,0.2);
+    border-radius:var(--radius); padding:28px 20px;
+    text-align:center; font-size:13px; color:var(--text-faint); line-height:1.6;
   }
   .vault-folders{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px; }
   .vault-folder{
     background:var(--panel); border:1px solid var(--line);
     border-radius:var(--radius); padding:16px 14px;
     display:flex; flex-direction:column; gap:6px; cursor:pointer;
-    transition:border-color .15s;
+    box-shadow:var(--card-shadow);
+    transition:border-color .15s, transform .1s;
   }
-  .vault-folder:hover{ border-color:var(--text-faint); }
+  .vault-folder:hover{ border-color:var(--text-faint); transform:translateY(-1px); }
   .vault-folder .folder-icon{ font-size:22px; }
   .vault-folder .folder-name{ font-size:13px; font-weight:600; color:var(--text); }
   .vault-folder .folder-count{ font-size:11px; color:var(--text-faint); }
   .vault-folder.general{ grid-column:1/-1; flex-direction:row; align-items:center; gap:12px; }
-  .vault-folder.general .folder-icon{ font-size:26px; }
+  .vault-folder.general .folder-icon{ font-size:24px; }
 
   /* ---- Gallery picker + inbox cards ---- */
   .capture-add-btn{
-    width:100%; padding:16px; border:1.5px dashed var(--line);
+    width:100%; padding:16px; border:1.5px dashed rgba(155,140,255,0.25);
     border-radius:var(--radius); background:transparent;
     color:var(--text-dim); font-size:14px; font-weight:600;
     cursor:pointer; display:flex; align-items:center; justify-content:center;
     gap:10px; transition:all .15s; margin-bottom:14px;
   }
-  .capture-add-btn:hover{ border-color:var(--own); color:var(--own); }
+  .capture-add-btn:hover{ border-color:var(--own); color:var(--own); background:rgba(155,140,255,0.04); }
   .inbox-card{
     background:var(--panel); border:1px solid var(--line);
     border-radius:var(--radius); overflow:hidden; margin-bottom:10px;
+    box-shadow:var(--card-shadow);
   }
   .inbox-card-img{
     width:100%; max-height:220px; object-fit:cover;
     display:block; background:var(--panel-2);
   }
   .inbox-card-body{ padding:14px; display:flex; flex-direction:column; gap:10px; }
-  .inbox-card-title{ font-size:14px; font-weight:600; color:var(--text); }
-  .inbox-card-meta{ font-size:12px; color:var(--text-faint); }
-  .inbox-tag-row{ display:flex; gap:6px; flex-wrap:wrap; }
-  .inbox-type-chip{
-    padding:5px 11px; border-radius:20px; border:1px solid var(--line);
-    background:var(--panel-2); color:var(--text-dim);
-    font-size:12px; font-weight:600; cursor:pointer; transition:all .15s;
-  }
-  .inbox-type-chip.active{ background:var(--own); color:#16151A; border-color:var(--own); }
+  .inbox-card-title{ font-size:14px; font-weight:600; color:var(--text); line-height:1.3; }
+  .inbox-card-meta{ font-size:11px; color:var(--text-faint); }
   .inbox-card-input{
     width:100%; background:var(--panel-2); color:var(--text);
     border:1px solid var(--line); border-radius:8px;
@@ -276,12 +299,58 @@
     border:1px solid var(--line); border-radius:8px;
     padding:9px 12px; font-size:13px;
   }
-  .btn-incubate{ color:var(--client) !important; border-color:var(--client) !important; }
-  .btn-incubate:hover{ background:rgba(255,138,92,0.1); }
-  .incubate-spawned{
-    background:rgba(155,140,255,0.08); border:1px solid rgba(155,140,255,0.3);
-    border-radius:10px; padding:10px 12px; font-size:12px;
-    color:var(--own); font-weight:600;
+  .btn-incubate{ display:none; }
+  .incubate-spawned{ display:none; }
+
+  /* ---- Capture bottom sheet ---- */
+  .capture-sheet-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.7);
+    z-index:500; display:flex; align-items:flex-end;
+    animation:fadeIn .15s ease;
+  }
+  .capture-sheet{
+    background:var(--panel); border-radius:20px 20px 0 0;
+    width:100%; padding:20px 16px 36px;
+    animation:slideUp .2s ease;
+  }
+  @keyframes slideUp{ from{transform:translateY(100%)} to{transform:translateY(0)} }
+  @keyframes fadeIn{ from{opacity:0} to{opacity:1} }
+  .capture-sheet-handle{
+    width:36px; height:4px; background:var(--line);
+    border-radius:2px; margin:0 auto 18px;
+  }
+  .capture-sheet-title{
+    font-size:16px; font-weight:700; color:var(--text);
+    margin-bottom:4px; text-align:center;
+  }
+  .capture-sheet-sub{
+    font-size:12px; color:var(--text-faint);
+    text-align:center; margin-bottom:18px;
+  }
+  .capture-sheet-options{
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .capture-sheet-btn{
+    display:flex; align-items:center; gap:12px;
+    padding:14px 16px; background:var(--panel-2);
+    border:1px solid var(--line); border-radius:12px;
+    cursor:pointer; text-align:left; width:100%;
+    transition:border-color .15s;
+  }
+  .capture-sheet-btn:active{ border-color:var(--own); }
+  .capture-sheet-btn .csb-ico{ font-size:22px; flex-shrink:0; }
+  .capture-sheet-btn .csb-label{ font-size:14px; font-weight:700; color:var(--text); }
+  .capture-sheet-btn .csb-desc{ font-size:12px; color:var(--text-faint); margin-top:2px; }
+  .capture-sheet-input{
+    width:100%; background:var(--panel-2); color:var(--text);
+    border:1px solid var(--line); border-radius:10px;
+    padding:12px 14px; font-size:14px; margin-bottom:10px;
+    font-family:inherit;
+  }
+  .capture-sheet-back{
+    font-size:12px; color:var(--text-faint); background:transparent;
+    border:none; cursor:pointer; margin-top:12px; width:100%;
+    text-align:center; padding:8px;
   }
 
   /* ---- Vault masonry modal ---- */
@@ -377,27 +446,27 @@
     cursor:pointer; transition:all .15s; white-space:nowrap;
   }
   .prio-chip.active{ background:var(--panel); color:var(--text); border-color:var(--own); }
-  .panel{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; margin-bottom:0; }
+  .panel{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; margin-bottom:0; box-shadow:var(--card-shadow); }
 
   .schedule{ display:flex; flex-direction:column; gap:8px; }
-  .sblock{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:12px 16px; }
-  .sblock.optional{ border-style:dashed; opacity:0.85; }
-  .srow1{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; }
-  .slabel{ font-size:13px; font-weight:700; }
-  .stime{ font-size:11px; color:var(--text-faint); }
-  .sassigns{ display:flex; flex-direction:column; gap:5px; }
-  .sassign{ display:flex; align-items:center; gap:8px; font-size:12px; }
+  .sblock{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; box-shadow:var(--card-shadow); }
+  .sblock.optional{ border-style:dashed; opacity:0.75; }
+  .srow1{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+  .slabel{ font-size:14px; font-weight:700; }
+  .stime{ font-size:10px; font-weight:700; color:var(--text-faint); background:var(--panel-2); padding:3px 9px; border-radius:20px; letter-spacing:0.03em; }
+  .sassigns{ display:flex; flex-direction:column; gap:6px; }
+  .sassign{ display:flex; align-items:center; gap:8px; font-size:13px; }
   .sdot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-  .shrs{ margin-left:auto; color:var(--text-faint); font-size:11px; }
-  .sempty{ font-size:12px; color:var(--text-faint); font-style:italic; }
+  .shrs{ margin-left:auto; color:var(--text-faint); font-size:11px; background:var(--panel-2); padding:2px 7px; border-radius:20px; }
+  .sempty{ font-size:12px; color:var(--text-faint); font-style:italic; padding:2px 0; }
   .sopt-tag{ font-size:10px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.06em; font-weight:700; }
-  .progress-btns{ display:flex; gap:5px; flex-wrap:wrap; margin-top:10px; }
-  .prog-btn{ flex:1; min-width:80px; padding:6px 4px; border:1px solid var(--line); border-radius:8px; background:var(--panel-2); color:var(--text-dim); font-size:11px; font-weight:600; cursor:pointer; transition:all .15s; text-align:center; }
-  .prog-btn.active{ background:var(--panel); color:var(--text); }
+  .progress-btns{ display:flex; gap:5px; flex-wrap:wrap; margin-top:12px; }
+  .prog-btn{ flex:1; min-width:80px; padding:7px 4px; border:1px solid var(--line); border-radius:9px; background:var(--panel-2); color:var(--text-dim); font-size:11px; font-weight:600; cursor:pointer; transition:all .15s; text-align:center; }
+  .prog-btn.active{ background:rgba(155,140,255,0.15); color:var(--own); border-color:rgba(155,140,255,0.3); }
   .prog-btn:hover{ border-color:var(--own); color:var(--text); }
-  .sblock-inner{ margin-top:8px; padding:8px 10px; background:var(--panel-2); border-radius:10px; }
+  .sblock-inner{ margin-top:10px; padding:10px 12px; background:var(--panel-2); border-radius:10px; }
   .sblock-time{ font-size:11px; color:var(--text-faint); font-weight:700; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px; }
-  .today-block{ border-color:var(--own) !important; box-shadow:0 0 0 1px rgba(155,140,255,0.2); }
+  .today-block{ border-color:rgba(155,140,255,0.4) !important; box-shadow:0 0 0 1px rgba(155,140,255,0.1), 0 2px 12px rgba(155,140,255,0.08) !important; }
 
   /* ---- Active block start banner ---- */
   .active-block-banner{
@@ -993,15 +1062,15 @@ function handleCaptureFiles(event){
   event.target.value = '';
 }
 
-// ---- Inbox rendering ----
+// ---- Inbox rendering — simplified, sheet handles classification ----
 function renderCapturesInbox(){
   const wrap = document.getElementById('capturesInbox');
   if(!wrap) return;
-  const pending = (state.captures||[]).filter(c=>!c.confirmed).reverse(); // newest first
+  const pending = (state.captures||[]).filter(c=>!c.confirmed).reverse();
 
   if(pending.length === 0){
     wrap.innerHTML = `<div class="captures-inbox-empty">
-      Nothing here yet — tap "Add from gallery" to pick a screenshot, or share one directly from any app.
+      Nothing here yet — tap "Add from gallery" or share directly from any app.
     </div>`;
     return;
   }
@@ -1012,71 +1081,326 @@ function renderCapturesInbox(){
     card.className = 'inbox-card';
     card.id = `cap_${cap.id}`;
 
-    // Build project options
-    const projectOptions = state.projects
-      .filter(p=>(p.progress||0)<100)
-      .map(p=>`<option value="${p.id}" ${cap.projectId===p.id?'selected':''}>${p.name}</option>`)
-      .join('');
+    const typeLabel = {
+      opportunity:'💼 Opportunity', competition:'🏆 Competition',
+      moodboard_use:'🎨 Use this', moodboard_later:'📌 Save for later',
+      misc:'📌 Misc', inspiration:'✨ Inspiration',
+    }[cap.type] || '❓ Unclassified';
+
+    const typeBg = {
+      opportunity:'rgba(255,138,92,0.15)', competition:'rgba(255,200,87,0.15)',
+      moodboard_use:'rgba(155,140,255,0.15)', moodboard_later:'rgba(74,189,172,0.15)',
+    }[cap.type] || 'rgba(155,155,155,0.15)';
+
+    const typeColor = {
+      opportunity:'var(--client)', competition:'var(--warn)',
+      moodboard_use:'var(--own)', moodboard_later:'var(--biz)',
+    }[cap.type] || 'var(--text-faint)';
+
+    const classified = cap.classified; // set by sheet flow
+    const needsClassify = !classified;
 
     card.innerHTML = `
-      ${cap.imageData ? `<img class="inbox-card-img" src="${cap.imageData}" alt="Capture preview" loading="lazy">` : ''}
+      ${cap.imageData ? `<img class="inbox-card-img" src="${cap.imageData}" alt="Capture" loading="lazy">` : ''}
       <div class="inbox-card-body">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px;">
           <div>
-            <div class="inbox-card-title">What is this?</div>
+            <div class="inbox-card-title">${cap.title || 'Untitled capture'}</div>
             <div class="inbox-card-meta">${new Date(cap.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
           </div>
-          ${cap.fromShare ? '<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;background:rgba(74,189,172,0.15);color:#4ABDAC;white-space:nowrap;">📤 Shared</span>' : ''}
+          <span style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;background:${typeBg};color:${typeColor};white-space:nowrap;flex-shrink:0;">${typeLabel}</span>
         </div>
 
-        ${cap.sharedText ? `<div style="background:var(--panel-2);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text-dim);line-height:1.5;max-height:100px;overflow-y:auto;">${cap.sharedText.replace(/</g,'&lt;')}</div>` : ''}
-        ${cap.sharedUrl ? `<div style="font-size:12px;color:var(--own);word-break:break-all;padding:4px 0;">🔗 ${cap.sharedUrl}</div>` : ''}
+        ${cap.sharedUrl ? `<div style="font-size:12px;color:var(--own);word-break:break-all;margin-bottom:8px;">🔗 ${cap.sharedUrl}</div>` : ''}
+        ${cap.sharedText ? `<div style="background:var(--panel-2);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--text-dim);line-height:1.5;max-height:80px;overflow-y:auto;margin-bottom:8px;">${cap.sharedText.slice(0,300).replace(/</g,'&lt;')}</div>` : ''}
+        ${cap.note ? `<div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">📝 ${cap.note}</div>` : ''}
+        ${cap.deadline ? `<div style="font-size:12px;color:var(--warn);margin-bottom:8px;">⏰ Deadline: ${cap.deadline}</div>` : ''}
 
-        ${cap.aiSuggestion ? `<div class="ai-suggestion-banner">
-          <strong>✨ AI read this as:</strong> ${cap.aiSuggestion}
-        </div>` : `<button class="btn btn-outline btn-full" id="aibtn_${cap.id}" onclick="analyseWithAI('${cap.id}')">
-          ✨ Analyse with AI
-        </button>`}
-
-        <div class="inbox-tag-row">
-          <button class="inbox-type-chip ${cap.type==='inspiration'?'active':''}" onclick="setCaptureType('${cap.id}','inspiration',this)">✨ Inspiration</button>
-          <button class="inbox-type-chip ${cap.type==='reference'?'active':''}" onclick="setCaptureType('${cap.id}','reference',this)">🖼 Reference</button>
-          <button class="inbox-type-chip ${cap.type==='opportunity'?'active':''}" onclick="setCaptureType('${cap.id}','opportunity',this)">💼 Opportunity</button>
-          <button class="inbox-type-chip ${cap.type==='misc'?'active':''}" onclick="setCaptureType('${cap.id}','misc',this)">📌 Misc</button>
-        </div>
-
-        <input class="inbox-card-input" type="text" placeholder="Title or note..."
-          value="${(cap.title||'').replace(/"/g,'&quot;')}"
-          onchange="updateCaptureField('${cap.id}','title',this.value)">
-
-        ${cap.type==='opportunity' ? `
-        <input class="inbox-card-input" type="text" placeholder="Source / link (optional)"
-          value="${(cap.source||'').replace(/"/g,'&quot;')}"
-          onchange="updateCaptureField('${cap.id}','source',this.value)">
-        <input class="inbox-card-input" type="text" placeholder="Deadline to apply (e.g. Jul 10)"
-          value="${(cap.deadline||'').replace(/"/g,'&quot;')}"
-          onchange="updateCaptureField('${cap.id}','deadline',this.value)">
-        ` : ''}
-
-        <div>
-          <div style="font-size:12px;color:var(--text-dim);margin-bottom:6px;">Assign to project:</div>
-          <select class="inbox-project-select" onchange="updateCaptureField('${cap.id}','projectId',this.value)">
-            <option value="general" ${cap.projectId==='general'?'selected':''}>🌐 General Vault</option>
-            ${projectOptions}
-          </select>
-        </div>
-
-        <div class="inbox-card-actions">
-          ${(cap.type==='inspiration'||cap.type==='reference') && !cap.incubated ? `
-          <button class="btn btn-outline btn-incubate btn-full" onclick="incubateIdea('${cap.id}')">⚡ Incubate Idea</button>
-          ` : cap.incubated ? `<div class="incubate-spawned">⚡ Project spawned → check Dashboard</div>` : ''}
-          <button class="btn btn-primary" style="flex:1;" onclick="confirmCapture('${cap.id}')">Save to Vault ✓</button>
-          <button class="btn btn-ghost" style="border:1px solid var(--line);" onclick="discardCapture('${cap.id}')">Discard</button>
+        <div class="inbox-card-actions" style="margin-top:4px;">
+          ${needsClassify
+            ? `<button class="btn btn-primary" style="flex:1;" onclick="openCaptureSheet('${cap.id}')">What is this? →</button>`
+            : `<button class="btn btn-secondary-sm" onclick="openCaptureSheet('${cap.id}')">Change type</button>
+               <button class="btn btn-primary" style="flex:1;" onclick="confirmCapture('${cap.id}')">Save ✓</button>`
+          }
+          <button class="btn btn-ghost" style="border:1px solid var(--line);padding:11px 12px;" onclick="discardCapture('${cap.id}')">✕</button>
         </div>
       </div>`;
 
     wrap.appendChild(card);
   });
+}
+
+// ---- Capture classification bottom sheet ----
+function openCaptureSheet(captureId){
+  document.getElementById('captureSheet')?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'capture-sheet-overlay';
+  overlay.id = 'captureSheet';
+  overlay.onclick = (e)=>{ if(e.target===overlay) overlay.remove(); };
+
+  overlay.innerHTML = `<div class="capture-sheet">
+    <div class="capture-sheet-handle"></div>
+    <div class="capture-sheet-title">What is this?</div>
+    <div class="capture-sheet-sub">Pick what best describes this capture</div>
+    <div class="capture-sheet-options">
+      <button class="capture-sheet-btn" onclick="captureSheetOpportunity('${captureId}')">
+        <div class="csb-ico">💼</div>
+        <div><div class="csb-label">Job / Opportunity</div><div class="csb-desc">A role, commission, or collab request</div></div>
+      </button>
+      <button class="capture-sheet-btn" onclick="captureSheetCompetition('${captureId}')">
+        <div class="csb-ico">🏆</div>
+        <div><div class="csb-label">Competition / Challenge</div><div class="csb-desc">Has a deadline, I want to enter</div></div>
+      </button>
+      <button class="capture-sheet-btn" onclick="captureSheetMoodboard('${captureId}')">
+        <div class="csb-ico">🎨</div>
+        <div><div class="csb-label">Inspiration / Mood board</div><div class="csb-desc">Something I want to save visually</div></div>
+      </button>
+      <button class="capture-sheet-btn" onclick="captureSheetMisc('${captureId}')">
+        <div class="csb-ico">📌</div>
+        <div><div class="csb-label">Something else</div><div class="csb-desc">Just save it for now</div></div>
+      </button>
+    </div>
+  </div>`;
+
+  document.body.appendChild(overlay);
+}
+
+function captureSheetOpportunity(captureId){
+  const overlay = document.getElementById('captureSheet');
+  const cap = (state.captures||[]).find(c=>c.id===captureId);
+  if(!cap || !overlay) return;
+
+  overlay.querySelector('.capture-sheet').innerHTML = `
+    <div class="capture-sheet-handle"></div>
+    <div class="capture-sheet-title">💼 Job / Opportunity</div>
+    <div class="capture-sheet-sub">What do you want to do with this?</div>
+    <div class="capture-sheet-options">
+      <button class="capture-sheet-btn" onclick="captureSheetOppReminder('${captureId}')">
+        <div class="csb-ico">⏰</div>
+        <div><div class="csb-label">Set reminder to apply</div><div class="csb-desc">I'll add a deadline and get a task reminder</div></div>
+      </button>
+      <button class="capture-sheet-btn" onclick="captureSheetOppSchedule('${captureId}')">
+        <div class="csb-ico">📅</div>
+        <div><div class="csb-label">Block time to work on it</div><div class="csb-desc">Reserve a morning block tomorrow</div></div>
+      </button>
+      <button class="capture-sheet-btn" onclick="captureSheetSaveLater('${captureId}','opportunity')">
+        <div class="csb-ico">📋</div>
+        <div><div class="csb-label">Save for later</div><div class="csb-desc">Just keep it, no action yet</div></div>
+      </button>
+    </div>
+    <button class="capture-sheet-back" onclick="openCaptureSheet('${captureId}')">← Back</button>`;
+}
+
+function captureSheetOppReminder(captureId){
+  const overlay = document.getElementById('captureSheet');
+  if(!overlay) return;
+
+  overlay.querySelector('.capture-sheet').innerHTML = `
+    <div class="capture-sheet-handle"></div>
+    <div class="capture-sheet-title">⏰ Set a reminder</div>
+    <div class="capture-sheet-sub">When is the application deadline?</div>
+    <input class="capture-sheet-input" id="csDeadline" type="text" placeholder="e.g. Jul 15 or 15 July" autocomplete="off">
+    <input class="capture-sheet-input" id="csSource" type="text" placeholder="Company / source (optional)" autocomplete="off">
+    <button class="btn btn-primary btn-full" onclick="captureSheetSaveOpportunity('${captureId}')">Save + create reminder →</button>
+    <button class="capture-sheet-back" onclick="captureSheetOpportunity('${captureId}')">← Back</button>`;
+
+  setTimeout(()=>document.getElementById('csDeadline')?.focus(), 200);
+}
+
+async function captureSheetSaveOpportunity(captureId){
+  const cap = (state.captures||[]).find(c=>c.id===captureId);
+  if(!cap) return;
+
+  const deadline = document.getElementById('csDeadline')?.value.trim() || '';
+  const source = document.getElementById('csSource')?.value.trim() || '';
+
+  cap.type = 'opportunity';
+  cap.classified = true;
+  cap.deadline = deadline;
+  cap.source = source;
+  cap.title = cap.title || (source ? `Apply to ${source}` : 'Job opportunity');
+
+  // Create task reminder
+  if(!state.tasks) state.tasks = [];
+  state.tasks.push({
+    id: 'task_opp_' + Date.now(),
+    text: `Apply: ${cap.title}${deadline ? ' — deadline ' + deadline : ''}`,
+    freq: 'One-off',
+    done: false,
+  });
+
+  document.getElementById('captureSheet')?.remove();
+  await confirmCapture(captureId);
+  renderTasks();
+  showFeedback('✓ Saved + reminder added to your tasks');
+}
+
+function captureSheetOppSchedule(captureId){
+  captureSheetSaveLater(captureId, 'opportunity', true);
+}
+
+function captureSheetCompetition(captureId){
+  const overlay = document.getElementById('captureSheet');
+  if(!overlay) return;
+
+  overlay.querySelector('.capture-sheet').innerHTML = `
+    <div class="capture-sheet-handle"></div>
+    <div class="capture-sheet-title">🏆 Competition / Challenge</div>
+    <div class="capture-sheet-sub">When is the deadline?</div>
+    <input class="capture-sheet-input" id="csCompDeadline" type="text" placeholder="e.g. Jul 30" autocomplete="off">
+    <div class="capture-sheet-sub" style="margin-top:6px;">How many hours a day can you put into this?</div>
+    <input class="capture-sheet-input" id="csCompHrsDay" type="number" min="0.5" max="8" step="0.5" placeholder="e.g. 2" autocomplete="off">
+    <button class="btn btn-primary btn-full" onclick="captureSheetSaveCompetition('${captureId}')">Save + create project →</button>
+    <button class="capture-sheet-back" onclick="openCaptureSheet('${captureId}')">← Back</button>`;
+
+  setTimeout(()=>document.getElementById('csCompDeadline')?.focus(), 200);
+}
+
+async function captureSheetSaveCompetition(captureId){
+  const cap = (state.captures||[]).find(c=>c.id===captureId);
+  if(!cap) return;
+
+  const deadline = document.getElementById('csCompDeadline')?.value.trim() || 'TBD';
+  const hrsDay = parseFloat(document.getElementById('csCompHrsDay')?.value) || 2;
+
+  cap.type = 'competition';
+  cap.classified = true;
+  cap.deadline = deadline;
+  cap.title = cap.title || 'Competition entry';
+
+  // Calculate total estimate: days until deadline × hrs/day
+  let daysLeft = 14; // fallback
+  const parsed = new Date(deadline + ' ' + new Date().getFullYear());
+  if(!isNaN(parsed.getTime())){
+    daysLeft = Math.max(1, Math.round((parsed - new Date()) / 86400000));
+  }
+  const totalHrs = Math.round(daysLeft * hrsDay);
+  const hrsPerWeek = Math.min(hrsDay * 7, 40);
+
+  // Create a project
+  const newProj = {
+    id: 'comp_' + Date.now(),
+    name: cap.title,
+    type: 'own',
+    color: '#FFC857',
+    goal: `Competition entry — ${hrsDay}h/day, deadline ${deadline}`,
+    deadline,
+    progress: 0,
+    status: 'Not started',
+    allocHrsPerWeek: Math.round(hrsPerWeek),
+    totalEstimate: totalHrs,
+    priority: 1,
+    weeklySlots: [],
+    fixed: false,
+    preferredBlock: 'any',
+  };
+  if(!state.projects) state.projects = [];
+  state.projects.push(newProj);
+  cap.projectId = newProj.id;
+
+  document.getElementById('captureSheet')?.remove();
+  await confirmCapture(captureId);
+  renderProjects(); renderSchedule(); renderWeek(); populateProjectSelects();
+  showFeedback(`✓ "${newProj.name}" added — ${daysLeft} days, ~${totalHrs}h total`);
+}
+
+function captureSheetMoodboard(captureId){
+  const overlay = document.getElementById('captureSheet');
+  if(!overlay) return;
+
+  overlay.querySelector('.capture-sheet').innerHTML = `
+    <div class="capture-sheet-handle"></div>
+    <div class="capture-sheet-title">🎨 Mood board</div>
+    <div class="capture-sheet-sub">What do you want to do with this?</div>
+    <div class="capture-sheet-options">
+      <button class="capture-sheet-btn" onclick="captureSheetMoodboardUse('${captureId}')">
+        <div class="csb-ico">⚡</div>
+        <div><div class="csb-label">Use this</div><div class="csb-desc">Reference for a project I'm working on</div></div>
+      </button>
+      <button class="capture-sheet-btn" onclick="captureSheetSaveLater('${captureId}','moodboard_later')">
+        <div class="csb-ico">📌</div>
+        <div><div class="csb-label">Save for later</div><div class="csb-desc">Pure inspiration, no project yet</div></div>
+      </button>
+    </div>
+    <button class="capture-sheet-back" onclick="openCaptureSheet('${captureId}')">← Back</button>`;
+}
+
+function captureSheetMoodboardUse(captureId){
+  const overlay = document.getElementById('captureSheet');
+  if(!overlay) return;
+
+  const projectOptions = state.projects
+    .filter(p=>(p.progress||0)<100)
+    .map(p=>`<option value="${p.id}">${p.name}</option>`)
+    .join('');
+
+  overlay.querySelector('.capture-sheet').innerHTML = `
+    <div class="capture-sheet-handle"></div>
+    <div class="capture-sheet-title">⚡ Which project?</div>
+    <div class="capture-sheet-sub">Attach this reference to a project</div>
+    <select class="capture-sheet-input" id="csMoodProj" style="margin-bottom:10px;">
+      <option value="general">🌐 General (no project yet)</option>
+      ${projectOptions}
+    </select>
+    <input class="capture-sheet-input" id="csMoodNote" type="text" placeholder="Note (optional)" autocomplete="off">
+    <button class="btn btn-primary btn-full" onclick="captureSheetSaveMoodboard('${captureId}','use')">Save ✓</button>
+    <button class="capture-sheet-back" onclick="captureSheetMoodboard('${captureId}')">← Back</button>`;
+}
+
+async function captureSheetSaveMoodboard(captureId, pile){
+  const cap = (state.captures||[]).find(c=>c.id===captureId);
+  if(!cap) return;
+
+  cap.type = pile === 'use' ? 'moodboard_use' : 'moodboard_later';
+  cap.classified = true;
+  if(pile === 'use'){
+    cap.projectId = document.getElementById('csMoodProj')?.value || 'general';
+    cap.note = document.getElementById('csMoodNote')?.value.trim() || '';
+  } else {
+    cap.projectId = 'general';
+  }
+
+  document.getElementById('captureSheet')?.remove();
+  await confirmCapture(captureId);
+  showFeedback(pile === 'use' ? '✓ Saved as reference' : '✓ Saved to mood board');
+}
+
+async function captureSheetSaveLater(captureId, type, scheduleBlock=false){
+  const cap = (state.captures||[]).find(c=>c.id===captureId);
+  if(!cap) return;
+
+  cap.type = type;
+  cap.classified = true;
+
+  if(scheduleBlock){
+    // Reserve morning block tomorrow
+    if(!state.opportunityBlocks) state.opportunityBlocks = [];
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    state.opportunityBlocks.push({
+      id: 'opp_' + Date.now(),
+      captureId,
+      day: days[tomorrow.getDay()],
+      blockId: 'morning',
+      title: cap.title || 'Review opportunity',
+    });
+  }
+
+  document.getElementById('captureSheet')?.remove();
+  await confirmCapture(captureId);
+  showFeedback(scheduleBlock ? '✓ Saved + morning block reserved tomorrow' : '✓ Saved');
+}
+
+async function captureSheetMisc(captureId){
+  const cap = (state.captures||[]).find(c=>c.id===captureId);
+  if(!cap) return;
+  cap.type = 'misc';
+  cap.classified = true;
+  document.getElementById('captureSheet')?.remove();
+  await confirmCapture(captureId);
+  showFeedback('✓ Saved');
 }
 
 function setCaptureType(id, type, btn){
@@ -1201,279 +1525,6 @@ async function scheduleOpportunityNotification(cap){
   }catch(e){ console.warn('Opportunity notification failed:', e); }
 }
 
-// ---- ⚡ Incubate Idea — spawns an Own IP project from a capture ----
-async function incubateIdea(id){
-  const cap = (state.captures||[]).find(c=>c.id===id);
-  if(!cap) return;
-
-  const apiKey = localStorage.getItem('spud-os-api-key');
-  const provider = localStorage.getItem('spud-os-provider') || 'anthropic';
-
-  if(!apiKey){
-    alert('Add your API key in the Assistant section on the Dashboard to use Incubate.');
-    return;
-  }
-
-  const btn = document.querySelector(`#cap_${cap.id} .btn-incubate`);
-  if(btn){ btn.disabled = true; btn.textContent = '⚡ Thinking…'; }
-
-  const prompt = `You are a creative project advisor for a freelance illustrator named Spud who creates NFT art, character designs, comic books, and brand illustrations.
-
-Look at this image. Generate a creative project concept that Spud could develop as original IP (Own IP).
-
-Respond ONLY with a JSON object — no markdown, no explanation:
-{
-  "name": "project name (punchy, max 5 words)",
-  "goal": "what Spud would create (max 15 words)",
-  "estimateHrs": 20,
-  "deadline": "TBD"
-}
-
-Keep it realistic for a solo freelance illustrator. Think: NFT collections, character series, comic concepts, illustration drops.`;
-
-  try{
-    let result = null;
-    const base64 = cap.imageData.split(',')[1];
-    const mediaType = cap.imageData.split(';')[0].split(':')[1] || 'image/jpeg';
-
-    if(provider === 'anthropic'){
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method:'POST',
-        headers:{
-          'Content-Type':'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version':'2023-06-01',
-          'anthropic-dangerous-direct-browser-access':'true',
-        },
-        body: JSON.stringify({
-          model:'claude-sonnet-4-6',
-          max_tokens:300,
-          messages:[{ role:'user', content:[
-            { type:'image', source:{ type:'base64', media_type:mediaType, data:base64 } },
-            { type:'text', text:prompt }
-          ]}]
-        })
-      });
-      const data = await res.json();
-      if(data.error) throw new Error(data.error.message);
-      const text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
-      result = JSON.parse(text.replace(/```json|```/g,'').trim());
-    } else {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ contents:[{ parts:[
-          { inline_data:{ mime_type:mediaType, data:base64 } },
-          { text:prompt }
-        ]}]})
-      });
-      const data = await res.json();
-      if(data.error) throw new Error(data.error.message);
-      const text = data.candidates?.[0]?.content?.parts?.map(p=>p.text).join('')||'';
-      result = JSON.parse(text.replace(/```json|```/g,'').trim());
-    }
-
-    if(result){
-      // Spawn the project card
-      const hrsWk = Math.max(2, Math.round((result.estimateHrs||20)/4));
-      const newProj = {
-        id: 'incub_' + Date.now(),
-        name: result.name,
-        type: 'own',
-        color: '#9B8CFF',
-        goal: result.goal,
-        deadline: result.deadline || 'TBD',
-        progress: 0,
-        status: 'Not started',
-        allocHrsPerWeek: hrsWk,
-        totalEstimate: result.estimateHrs || 20,
-        priority: 3,
-        weeklySlots: [],
-        fixed: false,
-        preferredBlock: 'any',
-        spawnedFrom: id, // reference back to capture
-      };
-      state.projects.push(newProj);
-      cap.incubated = true;
-      cap.incubatedProjectId = newProj.id;
-
-      await saveState();
-      renderProjects();
-      renderSchedule();
-      renderWeek();
-      populateProjectSelects();
-      renderCapturesInbox();
-      showFeedback(`⚡ "${result.name}" added to your projects!`);
-
-      // Switch to Dashboard to show the new card
-      setTimeout(()=>switchMainTab('dashboard'), 1500);
-    }
-
-  }catch(err){
-    if(btn){ btn.disabled = false; btn.textContent = '⚡ Incubate Idea'; }
-    alert('Incubate failed: ' + (err.message||'unknown error'));
-  }
-}
-
-async function discardCapture(id){
-  if(!confirm('Discard this capture?')) return;
-  state.captures = (state.captures||[]).filter(c=>c.id!==id);
-  await saveState();
-  renderCapturesInbox();
-  updateCapturesBadge();
-}
-
-// ---- AI image analysis ----
-async function analyseWithAI(id){
-  const cap = (state.captures||[]).find(c=>c.id===id);
-  if(!cap) return;
-
-  const apiKey = localStorage.getItem('spud-os-api-key');
-  const provider = localStorage.getItem('spud-os-provider') || 'anthropic';
-
-  if(!apiKey){
-    alert('Add your API key in the Assistant section on the Dashboard first.');
-    return;
-  }
-
-  // Show loading state on button
-  const btn = document.getElementById(`aibtn_${id}`);
-  if(btn){ btn.disabled = true; btn.textContent = '✨ Reading image…'; }
-
-  console.log('analyseWithAI — capture before analysis:', {
-    hasImage: !!cap.imageData,
-    sharedText: cap.sharedText,
-    sharedUrl: cap.sharedUrl,
-    currentType: cap.type,
-  });
-
-  const projectNames = state.projects
-    .filter(p=>(p.progress||0)<100)
-    .map(p=>p.name).join(', ');
-
-  const hasImage = !!cap.imageData;
-  const hasText = !!cap.sharedText;
-
-  const prompt = `You are classifying a shared social media post. Your FIRST and MOST IMPORTANT task is:
-
-${hasImage ? `STEP 1 — READ THE IMAGE: Look carefully at ALL text visible in the attached image. Instagram job posts are typically graphic images with large text like "WE ARE HIRING", "OPEN ROLE", "NOW HIRING", "APPLY NOW", job titles, role descriptions, work type (hybrid/remote/onsite), contact details, and "APPLY" calls-to-action. If you can see ANY of this in the image, classify as "opportunity" immediately.` : ''}
-
-${hasText ? `STEP 1 — READ THE CAPTION: "${cap.sharedText.slice(0,800)}"` : ''}
-
-STEP 2 — CLASSIFY using ONLY these rules in priority order:
-1. "opportunity" — the post is hiring someone, looking for a freelancer/collaborator, or soliciting applications/portfolios. Signals: "hiring", "we are hiring", "open role", "looking for", "apply", "DM us", "send your portfolio", job title, work type (hybrid/remote), salary/rate. **CLASSIFY AS OPPORTUNITY IF ANY OF THESE ARE PRESENT.**
-2. "inspiration" — purely aesthetic or creative content with ZERO hiring signals.
-3. "reference" — educational, technical, or instructional content.
-4. "misc" — nothing else fits.
-
-The poster is a freelance illustrator. Active projects: ${projectNames}.
-${cap.sharedUrl ? 'URL: ' + cap.sharedUrl : ''}
-
-Respond ONLY with valid JSON, no markdown:
-{
-  "type": "opportunity",
-  "title": "short title describing the role or opportunity (max 8 words)",
-  "projectId": "general",
-  "projectName": "General Vault",
-  "source": "company or account name if visible, else empty string",
-  "deadline": "application deadline if visible, else empty string",
-  "summary": "1-2 sentences: what role, what company, what they need"
-}
-
-Project IDs available: ${JSON.stringify(state.projects.filter(p=>(p.progress||0)<100).map(p=>({id:p.id,name:p.name})))}
-
-Replace the template values above with actual values from the content. The "type" field must be one of: opportunity, inspiration, reference, misc.`;
-
-  try{
-    let result = null;
-
-    if(provider === 'anthropic'){
-      const base64 = cap.imageData ? cap.imageData.split(',')[1] : null;
-      const mediaType = cap.imageData ? (cap.imageData.split(';')[0].split(':')[1] || 'image/jpeg') : null;
-
-      const content = [];
-      if(base64 && mediaType){
-        content.push({ type:'image', source:{ type:'base64', media_type:mediaType, data:base64 } });
-      }
-      content.push({ type:'text', text:prompt });
-
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 500,
-          messages: [{ role:'user', content }]
-        })
-      });
-      const data = await res.json();
-      if(data.error) throw new Error(data.error.message);
-      const text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
-      result = JSON.parse(text.replace(/```json|```/g,'').trim());
-
-    } else {
-      const base64 = cap.imageData ? cap.imageData.split(',')[1] : null;
-      const mimeType = cap.imageData ? (cap.imageData.split(';')[0].split(':')[1] || 'image/jpeg') : null;
-
-      const parts = [];
-      if(base64 && mimeType) parts.push({ inline_data:{ mime_type:mimeType, data:base64 } });
-      parts.push({ text:prompt });
-
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ contents:[{ parts }] })
-      });
-      const data = await res.json();
-      if(data.error) throw new Error(data.error.message);
-      const text = data.candidates?.[0]?.content?.parts?.map(p=>p.text).join('')||'';
-      result = JSON.parse(text.replace(/```json|```/g,'').trim());
-    }
-
-    // Apply AI suggestions to the capture
-    console.log('analyseWithAI — raw AI result:', result);
-    if(result){
-      cap.type = result.type || cap.type;
-      cap.title = result.title || cap.title;
-      cap.projectId = result.projectId || 'general';
-      cap.source = result.source || '';
-      cap.deadline = result.deadline || '';
-      cap.aiSuggestion = `${result.type} · "${result.title}" → ${result.projectName}. ${result.summary}`;
-      await saveState();
-
-      // Update just this card's UI in place — avoid full re-render which
-      // would wipe any type/project changes the user already made manually
-      const card = document.getElementById(`cap_${id}`);
-      if(card){
-        // Update type chips
-        card.querySelectorAll('.inbox-type-chip').forEach(b=>{
-          b.classList.toggle('active', b.textContent.toLowerCase().includes(cap.type));
-        });
-        // Update AI suggestion banner if it exists, or insert one
-        let banner = card.querySelector('.ai-suggestion-banner');
-        if(!banner){
-          banner = document.createElement('div');
-          banner.className = 'ai-suggestion-banner';
-          const body = card.querySelector('.inbox-card-body');
-          if(body) body.insertBefore(banner, body.firstChild);
-        }
-        banner.innerHTML = `<strong>✨ AI read:</strong> ${cap.aiSuggestion}`;
-        // Update project select value to match AI suggestion
-        const sel = card.querySelector('.inbox-project-select');
-        if(sel) sel.value = cap.projectId;
-      }
-    }
-
-  }catch(err){
-    if(btn){ btn.disabled = false; btn.textContent = '✨ Analyse with AI'; }
-    alert('AI analysis failed: ' + (err.message || 'unknown error') + '\n\nCheck your API key or try again.');
-  }
-}
 
 const STORAGE_KEY = 'spud-os-state-v1';
 
@@ -1989,7 +2040,7 @@ function renderSchedule(){
     wrap.appendChild(dayCard);
   });
 
-  if(wrap.innerHTML === '') wrap.innerHTML = '<div style="font-size:13px;color:var(--text-faint);padding:10px 0">No active projects — add one below to generate a schedule.</div>';
+  if(wrap.innerHTML === '') wrap.innerHTML = '<div style="font-size:13px;color:var(--text-faint);padding:10px 0">🎯 No active projects yet — add one below and your schedule will build itself.</div>';
 }
 
 // Block-out time modal
@@ -2892,7 +2943,7 @@ function renderTasks(){
   wrap.innerHTML = '';
   const active = state.tasks.filter(t=>!t.done);
   if(active.length === 0){
-    wrap.innerHTML = '<div style="padding:12px 16px; font-size:13px; color:var(--text-faint)">No pending tasks — add one below.</div>';
+    wrap.innerHTML = '<div style="padding:12px 16px; font-size:13px; color:var(--text-faint)">✅ No pending tasks — add one below when something comes up.</div>';
   }
   active.forEach(t=>{
     const item = document.createElement('div');
@@ -3516,7 +3567,7 @@ async function scheduleLocalNotifications(){
           schedule: { at: new Date(notifDate) },
           ongoing: true,
           autoCancel: false,
-          channelId: 'work_block',
+          channelId: 'work_block_v2',
           extra: { blockId: block.id, dayName, notifId },
         });
 
@@ -3755,8 +3806,12 @@ async function processSharedData(data){
     updateCapturesBadge();
     showShareToast('📥 Shared content added — AI is reading it…');
 
-    // Auto-trigger AI analysis
-    await analyseWithAI(capture.id);
+    // Open classification sheet immediately so user can tag this capture
+    renderCapturesInbox();
+    updateCapturesBadge();
+    showShareToast('📥 New capture — what is this?');
+    // Small delay so the inbox renders before sheet opens
+    setTimeout(()=>openCaptureSheet(capture.id), 400);
 
   }catch(e){
     console.error('Failed to process shared data:', e);
